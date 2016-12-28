@@ -1,6 +1,6 @@
 // pipSploder
 // marthematicist - 2016
-var vers = '0.04';
+var vers = '0.05';
 console.log( 'pipSploder - version ' + vers );
 
 // GLOBAL VARIABLES /////////////////////////////////////////
@@ -40,8 +40,10 @@ function setupGlobalVariables() {
     // conversion factors gamefield <-> window
     gf2winFactor = winExt / gfExt;
     win2gfFactor = gfExt / winExt;
+    // number of levels
+    numLevels = 5;
     // level radii
-    radLevel = [ 4.5 , 3.5 , 2.5 , 1.5 ];
+    radLevel = [ 4.5 , 3.5 , 2.5 , 1.5 , 0.5 ];
   }
   
   // PIP VARIABLES
@@ -61,8 +63,8 @@ function setupGlobalVariables() {
     // transition time (ms)
     transTime = 1500;
     // min/max time per level (ms)
-    minTimeAtLevel = [ 0 , 10000 , 10000 , 9999999999999 ];
-    maxTimeAtLevel = [ 40000 , 15000 , 15000 , 99999999999999 ];
+    minTimeAtLevel = [ 0 , 10000 , 10000 , 10000 , 9999999999999 ];
+    maxTimeAtLevel = [ 40000 , 15000 , 15000 , 15000 , 99999999999999 ];
   }
   
   
@@ -156,7 +158,7 @@ var Pip = function( ) {
   this.level = 0;
   // time at each level
   this.timeAtLevel = [];
-  for( var i = 0 ; i < 4 ; i++ ) {
+  for( var i = 0 ; i < numLevels ; i++ ) {
     this.timeAtLevel[i] = random( minTimeAtLevel[i] , maxTimeAtLevel[i] );
   }
   // start time this level
@@ -191,9 +193,11 @@ var Pip = function( ) {
       this.moveTo( r*cos( this.pa ) , r*sin( this.pa ) );
       // check if done transitioning. If so, start on next level
       if( ( millis()-this.transStart) > transTime ) {
+        var s = this.dpa * radLevel[this.level] / radLevel[0];
         this.level++;
         this.transitioning = false;
         this.levelStart = millis();
+        this.dpa = s / ( radLevel[this.level] / radLevel[0]);
       }
     } else {
       // if Pip is not transitioning, spin as usual
