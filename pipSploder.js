@@ -1,6 +1,6 @@
 // pipSploder
 // marthematicist - 2016
-var vers = '0.02';
+var vers = '0.03';
 console.log( 'pipSploder - version ' + vers );
 
 // GLOBAL VARIABLES /////////////////////////////////////////
@@ -29,7 +29,7 @@ function setupGlobalVariables() {
   // GAME FIELD VARIABLES
   {
     // number of Pips
-    numPips = 500;
+    numPips = 200;
     // extent of game field
     gfExt = 10;
     // border edges
