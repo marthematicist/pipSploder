@@ -29,7 +29,7 @@ function setupGlobalVariables() {
   // GAME FIELD VARIABLES
   {
     // number of Pips
-    numPips = 20;
+    numPips = 80;
     // extent of game field
     gfExt = 10;
     // border edges
@@ -40,22 +40,29 @@ function setupGlobalVariables() {
     // conversion factors gamefield <-> window
     gf2winFactor = winExt / gfExt;
     win2gfFactor = gfExt / winExt;
+    // level radii
+    radLevel = [ 4.5 , 3.5 , 2.5 , 1.5 ];
   }
   
-  // PIP CONSTRUCTOR VARIABLES
+  // PIP VARIABLES
   {
     // random color parameters
     minc = 150;
     maxc = 255;
     minColorDev = 20;
     // speed values
-    minDPA = 0.0007;
-    maxDPA = 0.0008;
+    minDPA = 0.0003;
+    maxDPA = 0.0004;
     // wiggle values
     minWR = 0.02;
     maxWR = 0.03;
     minDWA = 0.010;
     maxDWA = 0.020;
+    // transition time (ms)
+    transTime = 1500;
+    // min/max time per level (ms)
+    minTimeAtLevel = [ 0 , 10000 , 10000 , 9999999999999 ];
+    maxTimeAtLevel = [ 40000 , 15000 , 15000 , 99999999999999 ];
   }
   
   
@@ -63,6 +70,10 @@ function setupGlobalVariables() {
   {
     // Pip transparency
     pipAlpha = 255;
+    // inner Pip transparency
+    innerPipAlpha = 64;
+    // inner pip color
+    innerPipColor = color( 255 , 255 , 255 , innerPipAlpha );
     // background transparency
     bgAlpha = 255;
     // background color
@@ -70,13 +81,13 @@ function setupGlobalVariables() {
     // game field transparency
     gfAlpha = 20;
     // game field color
-    gfColor = color( 128 , 128 , 128 , gfAlpha );
+    gfColor = color( 0 , 0 , 0 , gfAlpha );
   }
   
   // RECORD-KEEPING VARIABLES
   {
-    frameTime = 50;
-    avgFrameTime = 50;
+    frameTime = 0;
+    avgFrameTime = 20;
   }
   
   // GLOBAL OBJECTS
@@ -137,10 +148,23 @@ var Pip = function( ) {
   // wiggle angle speed
   this.dwa = random( minDWA , maxDWA );
   // center position (p5.Vector)
-  this.x = createVector( (this.pr + this.wr*(0.5+0.5*cos( this.wa ) ) )*cos( this.pa ) ,
-                         (this.pr + this.wr*(0.5+0.5*cos( this.wa ) ) )*sin( this.pa ) );
+  this.x = createVector( (radLevel[this.level] + this.wr*(0.5+0.5*cos( this.wa ) ) )*cos( this.pa ) ,
+                         (radLevel[this.level]  + this.wr*(0.5+0.5*cos( this.wa ) ) )*sin( this.pa ) );
   // pip color
   this.color = color( random(minc,maxc) , random(minc,maxc) , random(minc,maxc) , pipAlpha );
+  // pip level
+  this.level = 0;
+  // time at each level
+  this.timeAtLevel = [];
+  for( var i = 0 ; i < 4 ; i++ ) {
+    this.timeAtLevel[i] = random( minTimeAtLevel[i] , maxTimeAtLevel[i] );
+  }
+  // start time this level
+  this.levelStart = millis();
+  // transitioning?
+  this.transitioning = false;
+  // start time for transition
+  this.transStart = 0;
   
   // CLASS METHODS: Pip
   // Pip method: draw
@@ -160,10 +184,35 @@ var Pip = function( ) {
   };
   // Pip method: evolve
   this.evolve = function( dt ) {
-    this.pa += this.dpa*dt;
-    this.wa += this.dwa*dt;
-    this.moveTo( (this.pr + this.wr*cos( this.wa ) )*cos( this.pa ) ,
-                 (this.pr + this.wr*cos( this.wa ) )*sin( this.pa ) );
+    if( this.transitioning ) {
+      // if Pip is transitioning, move toward next level
+      var a = ( millis()-this.transStart) / transTime ;
+      var r = (1-a)*radLevel[this.level] + a*radLevel[this.level+1];
+      this.moveTo( r*cos( this.pa ) , r*sin( this.pa ) );
+      // check if done transitioning. If so, start on next level
+      if( ( millis()-this.transStart) > transTime ) {
+        this.level++;
+        this.transitioning = false;
+        this.levelStart = millis();
+      }
+    } else {
+      // if Pip is not transitioning, spin as usual
+      if( this.level % 2 === 0 ) {
+        this.pa += this.dpa*dt;
+      } else {
+        this.pa -= this.dpa*dt;
+      }
+      this.wa += this.dwa*dt;
+      this.moveTo( (radLevel[this.level] + this.wr*(0.5+0.5*cos( this.wa ) ) )*cos( this.pa ) ,
+                 (radLevel[this.level]  + this.wr*(0.5+0.5*cos( this.wa ) ) )*sin( this.pa ) );
+      // check if time is up on this level, and if so start transitioning
+      if( millis() - this.levelStart > this.timeAtLevel[ this.level ] ) {
+        this.transitioning = true;
+        this.transStart = millis();
+      }
+    }
+    
+    
   };
   // Pip method: moveTo
   // moves the Pip to a new location and orients it based on previous location
@@ -190,7 +239,7 @@ function setup() {
 function draw() {
   // reset frameTime
   var dt = millis()  - frameTime
-  avgFrameTime = 0.9*avgFrameTime + 0.1*(dt);
+  avgFrameTime = 0.99*avgFrameTime + 0.01*(dt);
   frameTime = millis();
   
   // draw background
@@ -198,15 +247,16 @@ function draw() {
   
   // draw game field
   fill( gfColor );
+  noStroke();
   rect( ulx , uly , winExt , winExt );
   
   
   // draw pips
-  fill( 200 , 200 , 255 , 255 );
+  fill( innerPipColor );
   for( var i = 0 ; i < numPips ; i++ ) {
     var r = 4 + random( -0.02 , 0.02 );
-    P[i].evolve( dt );
-    fill( 255 );
+    P[i].evolve( avgFrameTime );
+    
     strokeWeight(2);
     P[i].draw();
   }
