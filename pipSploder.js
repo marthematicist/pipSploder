@@ -18,7 +18,7 @@ function setupGlobalVariables() {
     if( xRes > yRes ) {
       ulx = 0.5*(xRes - yRes);
       uly = 0;
-      gfe = yRes;
+      winExt = yRes;
     } else {
       uly = 0.5*(yRes - xRes);
       ulx = 0;
