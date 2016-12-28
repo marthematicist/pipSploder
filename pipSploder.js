@@ -1,6 +1,6 @@
 // pipSploder
 // marthematicist - 2016
-var vers = '0.03';
+var vers = '0.04';
 console.log( 'pipSploder - version ' + vers );
 
 // GLOBAL VARIABLES /////////////////////////////////////////
@@ -29,7 +29,7 @@ function setupGlobalVariables() {
   // GAME FIELD VARIABLES
   {
     // number of Pips
-    numPips = 200;
+    numPips = 20;
     // extent of game field
     gfExt = 10;
     // border edges
@@ -49,13 +49,13 @@ function setupGlobalVariables() {
     maxc = 255;
     minColorDev = 20;
     // speed values
-    minDPA = 0.008;
-    maxDPA = 0.016;
+    minDPA = 0.0007;
+    maxDPA = 0.0008;
     // wiggle values
-    minWR = 0.2;
-    maxWR = 0.3;
-    minDWA = 0.06;
-    maxDWA = 0.10;
+    minWR = 0.02;
+    maxWR = 0.03;
+    minDWA = 0.010;
+    maxDWA = 0.020;
   }
   
   
@@ -71,6 +71,12 @@ function setupGlobalVariables() {
     gfAlpha = 20;
     // game field color
     gfColor = color( 128 , 128 , 128 , gfAlpha );
+  }
+  
+  // RECORD-KEEPING VARIABLES
+  {
+    frameTime = 50;
+    avgFrameTime = 50;
   }
   
   // GLOBAL OBJECTS
@@ -144,7 +150,7 @@ var Pip = function( ) {
     var v1 = gf2winVect( p5.Vector.add( this.x , p5.Vector.mult( this.ld , this.s ) ) );
     var v2 = gf2winVect( p5.Vector.add( this.x , p5.Vector.mult( this.fd , -2*this.s ) ) );
     var v3 = gf2winVect( p5.Vector.add( this.x , p5.Vector.mult( this.ld , -this.s ) ) );
-    fill( this.color );
+    stroke( this.color );
     beginShape();
     vertex( v0.x , v0.y );
     vertex( v1.x , v1.y );
@@ -153,9 +159,9 @@ var Pip = function( ) {
     endShape( CLOSE );
   };
   // Pip method: evolve
-  this.evolve = function() {
-    this.pa += this.dpa;
-    this.wa += this.dwa;
+  this.evolve = function( dt ) {
+    this.pa += this.dpa*dt;
+    this.wa += this.dwa*dt;
     this.moveTo( (this.pr + this.wr*cos( this.wa ) )*cos( this.pa ) ,
                  (this.pr + this.wr*cos( this.wa ) )*sin( this.pa ) );
   };
@@ -182,8 +188,13 @@ function setup() {
 }
 
 function draw() {
+  // reset frameTime
+  var dt = millis()  - frameTime
+  avgFrameTime = 0.9*avgFrameTime + 0.1*(dt);
+  frameTime = millis();
+  
   // draw background
-  background( bgColor );
+  //background( bgColor );
   
   // draw game field
   fill( gfColor );
@@ -194,7 +205,9 @@ function draw() {
   fill( 200 , 200 , 255 , 255 );
   for( var i = 0 ; i < numPips ; i++ ) {
     var r = 4 + random( -0.02 , 0.02 );
-    P[i].evolve();
+    P[i].evolve( dt );
+    fill( 255 );
+    strokeWeight(2);
     P[i].draw();
   }
 }
