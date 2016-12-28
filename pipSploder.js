@@ -64,7 +64,7 @@ function setupGlobalVariables() {
     transTime = 1500;
     // min/max time per level (ms)
     minTimeAtLevel = [ 0 , 10000 , 10000 , 10000 , 10000 , 10000 , 9999999999999 ];
-    maxTimeAtLevel = [ 40000 , 15000 , 15000 , 15000 , 15000 , 15000 , 99999999999999 ];
+    maxTimeAtLevel = [ 200000 , 15000 , 15000 , 15000 , 15000 , 15000 , 99999999999999 ];
   }
   
   
@@ -196,6 +196,7 @@ var Pip = function( ) {
         var s = this.dpa * radLevel[this.level] / radLevel[0];
         this.level++;
         this.transitioning = false;
+        this.s *= 2;
         this.levelStart = millis();
         this.dpa = s / ( radLevel[this.level] / radLevel[0]);
       }
@@ -213,6 +214,7 @@ var Pip = function( ) {
       if( millis() - this.levelStart > this.timeAtLevel[ this.level ] ) {
         this.transitioning = true;
         this.transStart = millis();
+        this.s *= 0.5;
       }
     }
     
