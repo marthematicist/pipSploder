@@ -29,7 +29,7 @@ function setupGlobalVariables() {
   // GAME FIELD VARIABLES
   {
     // number of Pips
-    numPips = 80;
+    numPips = 200;
     // extent of game field
     gfExt = 10;
     // border edges
