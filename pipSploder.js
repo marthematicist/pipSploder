@@ -1,6 +1,6 @@
 // pipSploder
 // marthematicist - 2016
-var vers = '0.05';
+var vers = '0.07';
 console.log( 'pipSploder - version ' + vers );
 
 // GLOBAL VARIABLES /////////////////////////////////////////
@@ -41,9 +41,9 @@ function setupGlobalVariables() {
     gf2winFactor = winExt / gfExt;
     win2gfFactor = gfExt / winExt;
     // number of levels
-    numLevels = 5;
+    numLevels = 7;
     // level radii
-    radLevel = [ 4.5 , 3.5 , 2.5 , 1.5 , 0.5 ];
+    radLevel = [ 4.5 , 4 , 3.5 , 3 , 2.5 , 2 , 1.5 ];
   }
   
   // PIP VARIABLES
@@ -63,8 +63,8 @@ function setupGlobalVariables() {
     // transition time (ms)
     transTime = 1500;
     // min/max time per level (ms)
-    minTimeAtLevel = [ 0 , 10000 , 10000 , 10000 , 9999999999999 ];
-    maxTimeAtLevel = [ 40000 , 15000 , 15000 , 15000 , 99999999999999 ];
+    minTimeAtLevel = [ 0 , 10000 , 10000 , 10000 , 10000 , 10000 , 9999999999999 ];
+    maxTimeAtLevel = [ 40000 , 15000 , 15000 , 15000 , 15000 , 15000 , 99999999999999 ];
   }
   
   
