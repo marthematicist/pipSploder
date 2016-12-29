@@ -48,13 +48,17 @@ function setupGlobalVariables() {
   
   // PIP VARIABLES
   {
-    // random color parameters
-    minc = 128;
-    maxc = 255;
-    minColorDev = 128;
+    // Pip transparency
+    pipAlpha = 255;
+    // inner Pip transparency
+    innerPipAlpha = 32;
+    // inner pip color
+    innerPipColor = color( 0 , 0 , 0 , innerPipAlpha );
+    // pip outline thickness
+    pipLineWeight = 0.06;
     // speed values
     minDPA = 0.0003;
-    maxDPA = 0.0004;
+    maxDPA = 0.0003;
     // wiggle values
     minWR = 0.02;
     maxWR = 0.03;
@@ -70,26 +74,22 @@ function setupGlobalVariables() {
   }
   
   
-  // DRAW VARIABLES
+  // GAME FIELD VARIABLES
   {
-    // Pip transparency
-    pipAlpha = 255;
-    // inner Pip transparency
-    innerPipAlpha = 255;
-    // inner pip color
-    innerPipColor = color( 0 , 0 , 0 , innerPipAlpha );
     // background transparency
     bgAlpha = 255;
     // background color
     bgColor = color( 255 , 255 , 255 , bgAlpha );
     // game field transparency
-    gfAlpha = 20;
+    gfAlpha = 10;
     // game field color
     gfColor = color( 0 , 0 , 0 , gfAlpha );
     // game field line alpha
-    gfLineAlpha = 255;
+    gfLineAlpha = 32;
     // game field line color
     gfLineColor = color( 255 , 255 , 255 , gfLineAlpha );
+    // game field color velocity
+    gfColorSpeed = 0.1;
   }
   
   // RECORD-KEEPING VARIABLES
@@ -100,8 +100,11 @@ function setupGlobalVariables() {
   
   // TIME VARIABLES
   {
+    // simte since game was initialized
     gameTime = 0;
+    // time of last pip added
     newPipTime = 0;
+    // time between adding new pips
     timeBetweenNewPips = 2000;
   }
   
@@ -178,7 +181,8 @@ var Pip = function( ) {
   this.x = createVector( (radLevel[this.level] + this.wr*(0.5+0.5*cos( this.wa ) ) )*cos( this.pa ) ,
                          (radLevel[this.level]  + this.wr*(0.5+0.5*cos( this.wa ) ) )*sin( this.pa ) );
   // pip color
-  this.color = hsvColor( random(0,360) , 0.5 , 1 , pipAlpha );
+  this.strokeColor = hsvColor( random(0,360) , random(0.25,0.75) , random(0.75,1) , pipAlpha );
+  this.fillColor = color( red(this.strokeColor) , green(this.strokeColor) , blue(this.strokeColor) , innerPipAlpha );
   // pip level
   this.level = 0;
   // time at each level
@@ -204,13 +208,14 @@ var Pip = function( ) {
       var v1 = gf2winVect( p5.Vector.add( this.x , p5.Vector.mult( this.ld , this.s ) ) );
       var v2;
       if( this.transitioning ) {
-        v2 = gf2winVect( p5.Vector.add( this.x , p5.Vector.mult( this.fd , -this.s ) ) );
+        v2 = gf2winVect( p5.Vector.add( this.x , p5.Vector.mult( this.fd , -1.5*this.s ) ) );
       } else {
         v2 = gf2winVect( p5.Vector.add( this.x , p5.Vector.mult( this.fd , -2*this.s ) ) );
       }
       var v3 = gf2winVect( p5.Vector.add( this.x , p5.Vector.mult( this.ld , -this.s ) ) );
-      strokeWeight(0.5*this.s*gf2winFactor);
-      stroke( this.color );
+      strokeWeight(pipLineWeight*gf2winFactor);
+      stroke( this.strokeColor );
+      //fill( this.fillColor );
       beginShape();
       vertex( v0.x , v0.y );
       vertex( v1.x , v1.y );
@@ -225,7 +230,10 @@ var Pip = function( ) {
       // if Pip is transitioning, move toward next level
       var a = ( gameTime-this.transStart) / transTime ;
       var r = (1-a)*radLevel[this.level] + a*radLevel[this.level+1];
-      this.moveTo( r*cos( this.pa ) , r*sin( this.pa ) );
+      this.wa += this.dwa*dt;
+      this.wa %= TWO_PI;
+      this.moveTo( r*cos( this.pa + 0.9*this.wr*cos(this.wa) ) ,
+                   r*sin( this.pa + 0.9*this.wr*cos(this.wa) ) );
       // check if done transitioning. If so, start on next level
       if( ( gameTime-this.transStart) > transTime ) {
         var s = this.dpa * radLevel[this.level] / radLevel[0];
@@ -247,6 +255,7 @@ var Pip = function( ) {
       }
       this.pa %= TWO_PI;
       this.wa += this.dwa*dt;
+      this.wa %= TWO_PI;
       this.moveTo( (radLevel[this.level] + this.wr*(0.5+0.5*cos( this.wa ) ) )*cos( this.pa ) ,
                  (radLevel[this.level]  + this.wr*(0.5+0.5*cos( this.wa ) ) )*sin( this.pa ) );
       // check if time is up on this level, and if so start transitioning
@@ -308,12 +317,13 @@ var Game = function() {
     this.removeDeadObj();
   };
   // Game method: draw
-  // draws all Pips, Splosions
+  // draws game field and all Pips, Splosions
   this.draw = function() {
     // draw circles
-    strokeWeight( 0.01*gf2winFactor );
+    strokeWeight( 0.02*gf2winFactor );
     for( var i = 0 ; i < numLevels ; i++ ) {
-      stroke( gfLineColor );
+      var a = gameTime*gfColorSpeed;
+      stroke( hsvColor( (a + 360*i/numLevels)%360 , 0.25 , 1 , gfLineAlpha ) );
       noFill();
       var d = ( radLevel[i] - 0.25 )*2*gf2winFactor;
       ellipse( 0.5*xRes , 0.5*yRes , d , d );
