@@ -57,7 +57,7 @@ function setupGlobalVariables() {
     // Pip transparency
     pipAlpha = 255;
     // inner Pip transparency
-    innerPipAlpha = 32;
+    innerPipAlpha = 255;
     // inner pip color
     innerPipColor = color( 0 , 0 , 0 , innerPipAlpha );
     // pip outline thickness
@@ -73,8 +73,8 @@ function setupGlobalVariables() {
     // transition time (ms)
     transTime = 1500;
     // min/max time per level (ms)
-    typMin = 15000;
-    typMax = 20000;
+    typMin = 5000;
+    typMax = 10000;
     minTimeAtLevel = [ 0 , typMin ,typMin , typMin , typMin , typMin , typMin , typMin ];
     maxTimeAtLevel = [ 0 , typMax ,typMax , typMax , typMax , typMax , typMax , typMax ];
   }
@@ -128,7 +128,7 @@ function setupGlobalVariables() {
   // BOMB VARIABLES
   {
     // bomb tansparency
-    bombAlpha = 255;
+    bombAlpha = 196;
     // bomb color
     bombColor = color( 255 , 255 , 255 , bombAlpha );
     // bomb stroke weight
@@ -138,7 +138,7 @@ function setupGlobalVariables() {
     // bomb velocity
     bombVel = 0.003;
     // blast velocity
-    blastVel = 0.001;
+    blastVel = 0.0012;
     // maximum blast radius
     maxBlast = 1;
     // linger time
@@ -252,7 +252,7 @@ var Pip = function( ) {
       var v3 = gf2winVect( p5.Vector.add( this.x , p5.Vector.mult( this.ld , -this.s ) ) );
       strokeWeight(pipLineWeight*gf2winFactor);
       stroke( this.strokeColor );
-      //fill( this.fillColor );
+      fill( this.fillColor );
       beginShape();
       vertex( v0.x , v0.y );
       vertex( v1.x , v1.y );
@@ -419,6 +419,8 @@ var Bomb = function( xd ) {
   this.alive = true;
   // time at start of dying
   this.dyingTime = 0;
+  // color
+  this.color = hsvColor( random(0,360) , random(0.5,0.5) , random(1,1) , bombAlpha );
   
   
   // CLASS METHODS:
@@ -671,12 +673,14 @@ function draw() {
   G.draw();
   
   // draw background
-  var N = 20;
+  var N = 40;
   var dr = (0.5*maxDist - 0.5*minRes)/N;
   strokeWeight(dr+2);
   for( var n = 0 ; n < N ; n++ ) {
     var cv = n/N*200;
-    stroke( cv , cv , cv , 255 );
+    var a = gameTime*gfColorSpeed;
+    //stroke( cv , cv , cv , 255 );
+    stroke( hsvColor( (a + 360*n/N)%360 , 0.8 , 0.2 , 255 ) );
     var r = 0.5*minRes + (n+1)*dr;
     noFill();
     ellipse( 0.5*xRes , 0.5*yRes , 2*r , 2*r );
