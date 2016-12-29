@@ -140,6 +140,8 @@ function setupGlobalVariables() {
     blastVel = 0.001;
     // maximum blast radius
     maxBlast = 1;
+    // linger time
+    bombLinger = 40;
   }
   
 }
@@ -185,8 +187,6 @@ function hsvColor( h , s , v , a ) {
 
 // CLASS: Pip /////////////////////////////////////////////////////////////
 var Pip = function( ) {
-  // CONSTRUCTOR INPUTS: Pip
-  //  xIn: center position
   // OBJECT VARIABLES: Pip
   // forward direction (normalized p5.Vector)
   this.fd = createVector( 1 , 0 );
@@ -283,6 +283,7 @@ var Pip = function( ) {
         this.pa -= this.dpa*dt;
       }
       this.pa %= TWO_PI;
+      if( this.pa < 0 ) { this.pa += TWO_PI; }
       this.wa += this.dwa*dt;
       this.wa %= TWO_PI;
       this.moveTo( (radLevel[this.level] + this.wr*(0.5+0.5*cos( this.wa ) ) )*cos( this.pa ) ,
@@ -293,7 +294,6 @@ var Pip = function( ) {
         this.transStart = gameTime;
       }
     }
-    
     
   };
   // Pip method: moveTo
@@ -309,10 +309,10 @@ var Pip = function( ) {
 };
 
 // CLASS: Splosion /////////////////////////////////////////////////////////////
-var Splosion = function( x , y , c ) {
+var Splosion = function( x , c ) {
   //OBJECT VARIABLES:
   // position
-  this.x = createVector( x , y );
+  this.x = createVector( x.x , x.y );
   // color
   this.color = color( red(c) , green(c) , blue(c) , alpha(c) );
   // position (polar)
@@ -333,7 +333,7 @@ var Splosion = function( x , y , c ) {
   this.px = [];
   this.pv = [];
   for( var i = 0 ; i < this.np ; i++ ) {
-    this.px[i] = createVector( x , y );
+    this.px[i] = createVector( x.x , x.y );
     this.pv[i] = p5.Vector.random2D();
     this.pv[i].mult( random( this.pvMin , this.pvMax ) );
   }
@@ -368,10 +368,10 @@ var Splosion = function( x , y , c ) {
   }
 };
 
-// CLASS: Bomb
+// CLASS: Bomb ////////////////////////////////////////////////////////
 var Bomb = function( xd ) {
   // OBJECT VARIABLES:
-  // mode: trav , blast , dead
+  // mode: trav , blast , dying
   this.mode = 'trav';
   // destination (p5.Vector)
   this.xd = createVector( xd.x , xd.y );
@@ -382,6 +382,10 @@ var Bomb = function( xd ) {
   this.xdir.normalize();
   // heading
   this.ang = this.xdir.heading() % TWO_PI;
+  if( this.ang < 0 ) { this.ang += TWO_PI; }
+  // min/max explosion angles
+  this.minAng = this.ang;
+  this.maxAng = this.ang;
   // make sure destination is far enough from center
   if( this.xdd < baseRadius ) {
     this.xd = p5.Vector.mult( this.xdir , baseRadius );
@@ -401,6 +405,8 @@ var Bomb = function( xd ) {
   this.br = 0;
   // alive?
   this.alive = true;
+  // time at start of dying
+  this.dyingTime = 0;
   
   
   // CLASS METHODS:
@@ -445,11 +451,24 @@ var Bomb = function( xd ) {
     if( this.mode === 'blast' ) {
       // increase blast radius
       this.br += blastVel * dt;
+      // find min/max explosion angles
+      var a = asin( (this.br+2*pipSize) / this.xdd ) % TWO_PI;
+      this.minAng = ( this.ang - a ) % TWO_PI;
+      if( this.minAng < 0 ) { this.minAng += TWO_PI; }
+      this.maxAng = ( this.ang + a ) % TWO_PI;
+      if( this.maxAng < 0 ) { this.maxAng += TWO_PI; }
       // if blast radius has exceeded maximum, set
       // it to max and kill the bomb
       if( this.br > maxBlast ) {
         this.br = maxBlast;
-        this.mode = 'dead';
+        this.mode = 'dying';
+        this.dyingTime = gameTime;
+      }
+    }
+    // if in dying mode
+    if( this.mode === 'dying' ) {
+      // check if linger time expired
+      if( gameTime - this.dyingTime > bombLinger ) {
         this.alive = false;
       }
     }
@@ -476,9 +495,36 @@ var Game = function() {
   this.bombs = [];
   
   // CLASS METHODS:
+  // Game method: checkBlasts
+  // checks whether blasts have killed any pips
+  this.checkBlasts = function() {
+    // for each Bomb
+    for( var b = 0 ; b < this.numB ; b++ ) {
+      // only check bombs in 'blast' mode
+      if( this.bombs[b].mode === 'blast' || this.bombs[b].mode === 'dying' ) {
+        var b1 = this.bombs[b].minAng;
+        var b2 = this.bombs[b].maxAng;
+        // parse through all pips
+        for( var p = 0 ; p < this.numP ; p++ ) {
+          var p1 = this.pips[p].pa;
+          // only check pips with angles within the blast angle
+          if( (b1>b2)&&(p1>b1||p1<b2) || (b1<=b2)&&(p1>b1&&p1<b2) ) {
+            var d = p5.Vector.dist( this.pips[p].x , this.bombs[b].xd );
+            if( d < this.bombs[b].br + pipSize*2 ) {
+              this.pips[p].alive = false;
+              append( this.splosions , new Splosion( this.pips[p].x , this.pips[p].strokeColor ) );
+              this.numS++;
+            }
+          }
+        }
+      }
+    }
+  };
   // Game method: evolve
   // evolves all Pips, Splosions
   this.evolve = function( dt ) {
+    // check if blast killed any pips
+    this.checkBlasts();
     // check if it's time for a new pip
     if( gameTime - newPipTime > timeBetweenNewPips ) {
       this.pips[ this.numP ] = new Pip();
@@ -512,6 +558,10 @@ var Game = function() {
       var d = ( radLevel[i] - 0.25 )*2*gf2winFactor;
       ellipse( 0.5*xRes , 0.5*yRes , d , d );
     }
+    // draw all Bombs
+    for( var i = 0 ; i < this.numB ; i++ ) {
+      this.bombs[i].draw();
+    }
     // draw all Pips
     fill( innerPipColor );
     for( var i = 0 ; i < this.numP ; i++ ) {
@@ -521,10 +571,7 @@ var Game = function() {
     for( var i = 0 ; i < this.numS ; i++ ) {
       this.splosions[i].draw();
     }
-      // draw all Bombs
-    for( var i = 0 ; i < this.numB ; i++ ) {
-      this.bombs[i].draw();
-    }
+    
   };
   // Game method: removeDeadObj
   // removes dead Pips, Splosions
@@ -591,7 +638,6 @@ function draw() {
   frameTime = millis();
   // roll forward gameTime
   gameTime += avgFrameTime;
-  //console.log( avgFrameTime );
   
 
   
