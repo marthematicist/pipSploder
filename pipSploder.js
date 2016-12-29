@@ -1,6 +1,6 @@
 // pipSploder
 // marthematicist - 2016
-var vers = '0.07';
+var vers = '0.08';
 console.log( 'pipSploder - version ' + vers );
 
 // GLOBAL VARIABLES /////////////////////////////////////////
@@ -43,15 +43,15 @@ function setupGlobalVariables() {
     // number of levels
     numLevels = 7;
     // level radii
-    radLevel = [ 4.5 , 4 , 3.5 , 3 , 2.5 , 2 , 1.5 ];
+    radLevel = [ 4.5 , 4 , 3.5 , 3 , 2.5 , 2 , 1.5 , 1 ];
   }
   
   // PIP VARIABLES
   {
     // random color parameters
-    minc = 150;
+    minc = 128;
     maxc = 255;
-    minColorDev = 20;
+    minColorDev = 64;
     // speed values
     minDPA = 0.0003;
     maxDPA = 0.0004;
@@ -63,8 +63,10 @@ function setupGlobalVariables() {
     // transition time (ms)
     transTime = 1500;
     // min/max time per level (ms)
-    minTimeAtLevel = [ 0 , 10000 , 10000 , 10000 , 10000 , 10000 , 9999999999999 ];
-    maxTimeAtLevel = [ 200000 , 15000 , 15000 , 15000 , 15000 , 15000 , 99999999999999 ];
+    typMin = 10000;
+    typMax = 15000;
+    minTimeAtLevel = [ 0 , typMin , typMin , typMin , typMin , typMin , typMin ];
+    maxTimeAtLevel = [ 200000 , typMax , typMax , typMax , typMax , typMax , typMax ];
   }
   
   
@@ -73,9 +75,9 @@ function setupGlobalVariables() {
     // Pip transparency
     pipAlpha = 255;
     // inner Pip transparency
-    innerPipAlpha = 64;
+    innerPipAlpha = 255;
     // inner pip color
-    innerPipColor = color( 255 , 255 , 255 , innerPipAlpha );
+    innerPipColor = color( 0 , 0 , 0 , innerPipAlpha );
     // background transparency
     bgAlpha = 255;
     // background color
@@ -89,12 +91,17 @@ function setupGlobalVariables() {
   // RECORD-KEEPING VARIABLES
   {
     frameTime = 0;
-    avgFrameTime = 20;
+    avgFrameTime = 100;
+  }
+  
+  // TIME VARIABLES
+  {
+    gameTime = 0;
   }
   
   // GLOBAL OBJECTS
   {
-    P = [];
+    G = 0;
   }
   
 }
@@ -140,13 +147,13 @@ var Pip = function( ) {
   // path radius
   this.pr = 4;
   // path angle
-  this.pa = random( 0 , 2*PI );
+  this.pa = random( 0 , TWO_PI );
   // path angle speed
   this.dpa = random( minDPA , maxDPA );
   // wiggle radius
   this.wr = random( minWR , maxWR );
   // wiggle angle
-  this.wa = random( 0 , 2*PI );
+  this.wa = random( 0 , TWO_PI );
   // wiggle angle speed
   this.dwa = random( minDWA , maxDWA );
   // center position (p5.Vector)
@@ -162,43 +169,56 @@ var Pip = function( ) {
     this.timeAtLevel[i] = random( minTimeAtLevel[i] , maxTimeAtLevel[i] );
   }
   // start time this level
-  this.levelStart = millis();
+  this.levelStart = gameTime;
   // transitioning?
   this.transitioning = false;
   // start time for transition
   this.transStart = 0;
+  // is Pip alive?
+  this.alive = true;
   
   // CLASS METHODS: Pip
   // Pip method: draw
   // draws the Pip to the canvas
   this.draw = function() {
-    var v0 = gf2winVect( p5.Vector.add( this.x , p5.Vector.mult( this.fd , this.s ) ) );
-    var v1 = gf2winVect( p5.Vector.add( this.x , p5.Vector.mult( this.ld , this.s ) ) );
-    var v2 = gf2winVect( p5.Vector.add( this.x , p5.Vector.mult( this.fd , -2*this.s ) ) );
-    var v3 = gf2winVect( p5.Vector.add( this.x , p5.Vector.mult( this.ld , -this.s ) ) );
-    stroke( this.color );
-    beginShape();
-    vertex( v0.x , v0.y );
-    vertex( v1.x , v1.y );
-    vertex( v2.x , v2.y );
-    vertex( v3.x , v3.y );
-    endShape( CLOSE );
+    if( this.alive ) {
+      var v0 = gf2winVect( p5.Vector.add( this.x , p5.Vector.mult( this.fd , this.s ) ) );
+      var v1 = gf2winVect( p5.Vector.add( this.x , p5.Vector.mult( this.ld , this.s ) ) );
+      var v2;
+      if( this.transitioning ) {
+        v2 = gf2winVect( p5.Vector.add( this.x , p5.Vector.mult( this.fd , -this.s ) ) );
+      } else {
+        v2 = gf2winVect( p5.Vector.add( this.x , p5.Vector.mult( this.fd , -2*this.s ) ) );
+      }
+      var v3 = gf2winVect( p5.Vector.add( this.x , p5.Vector.mult( this.ld , -this.s ) ) );
+      strokeWeight(0.5*this.s*gf2winFactor);
+      stroke( this.color );
+      beginShape();
+      vertex( v0.x , v0.y );
+      vertex( v1.x , v1.y );
+      vertex( v2.x , v2.y );
+      vertex( v3.x , v3.y );
+      endShape( CLOSE );
+    }
   };
   // Pip method: evolve
   this.evolve = function( dt ) {
     if( this.transitioning ) {
       // if Pip is transitioning, move toward next level
-      var a = ( millis()-this.transStart) / transTime ;
+      var a = ( gameTime-this.transStart) / transTime ;
       var r = (1-a)*radLevel[this.level] + a*radLevel[this.level+1];
       this.moveTo( r*cos( this.pa ) , r*sin( this.pa ) );
       // check if done transitioning. If so, start on next level
-      if( ( millis()-this.transStart) > transTime ) {
+      if( ( gameTime-this.transStart) > transTime ) {
         var s = this.dpa * radLevel[this.level] / radLevel[0];
         this.level++;
-        this.transitioning = false;
-        this.s *= 2;
-        this.levelStart = millis();
-        this.dpa = s / ( radLevel[this.level] / radLevel[0]);
+        if( this.level > numLevels-1 ) {
+          this.alive = false;
+        } else {
+          this.transitioning = false;
+          this.levelStart = gameTime;
+         this.dpa = s / ( radLevel[this.level] / radLevel[0]);
+        }
       }
     } else {
       // if Pip is not transitioning, spin as usual
@@ -207,14 +227,14 @@ var Pip = function( ) {
       } else {
         this.pa -= this.dpa*dt;
       }
+      this.pa %= TWO_PI;
       this.wa += this.dwa*dt;
       this.moveTo( (radLevel[this.level] + this.wr*(0.5+0.5*cos( this.wa ) ) )*cos( this.pa ) ,
                  (radLevel[this.level]  + this.wr*(0.5+0.5*cos( this.wa ) ) )*sin( this.pa ) );
       // check if time is up on this level, and if so start transitioning
-      if( millis() - this.levelStart > this.timeAtLevel[ this.level ] ) {
+      if( gameTime - this.levelStart > this.timeAtLevel[ this.level ] ) {
         this.transitioning = true;
-        this.transStart = millis();
-        this.s *= 0.5;
+        this.transStart = gameTime;
       }
     }
     
@@ -232,21 +252,96 @@ var Pip = function( ) {
   };
 };
 
+// CLASS: Splosion /////////////////////////////////////////////////////////////
+var Splosion = function( x , y , c ) {
+  
+}
+
+// CLASS: Game /////////////////////////////////////////////////////////////////
+var Game = function() {
+  // OBJECT VARIABLES:
+  // number of Pips
+  this.numP = numPips;
+  // array of Pips
+  this.pips = [];
+  for( var i = 0 ; i < numPips ; i++ ) {
+    this.pips[i] = new Pip();
+  }
+  // number of Splosions
+  this.numS = 0;
+  // array of Splosions
+  this.splosions = [];
+  
+  // CLASS METHODS:
+  // Game method: evolve
+  // evolves all Pips, Splosions
+  this.evolve = function( dt ) {
+    // evolve all Pips
+    for( var i = 0 ; i < this.numP ; i++ ) {
+      this.pips[i].evolve( dt );
+    }
+    // remove dead objects
+    this.removeDeadObj();
+  };
+  // Game method: draw
+  // draws all Pips, Splosions
+  this.draw = function() {
+    // draw all Pips
+    fill( innerPipColor );
+    for( var i = 0 ; i < this.numP ; i++ ) {
+      this.pips[i].draw();
+    }
+  };
+  // Game method: removeDeadObj
+  // removes dead Pips, Splosions
+  this.removeDeadObj = function() {
+    // remove dead Pips
+    var ind = [];
+    for( var i = 0 ; i < this.numP ; i++ ) {
+      if( !this.pips[i].alive ) {
+        append( ind , i );
+      }
+    }
+    reverse( ind );
+    for( var i = 0 ; i < ind.length ; i++ ) {
+      this.pips.splice( ind[i] , 1 );
+    }
+    this.numP -= ind.length;
+    // remove dead Splosions
+    ind = [];
+    for( var i = 0 ; i < this.numS ; i++ ) {
+      if( !this.splosions[i].alive ) {
+        append( ind , i );
+      }
+    }
+    reverse( ind );
+    for( var i = 0 ; i < ind.length ; i++ ) {
+      this.splosions.splice( ind[i] , 1 );
+    }
+    this.numS -= ind.length;
+  }
+  
+};
+
+// SETUP FUNCTION //////////////////////////////////////////////////////////////
 function setup() {
   setupGlobalVariables();
   createCanvas( xRes , yRes );
   
-  for( var i = 0 ; i < numPips ; i++ ) {
-    var r = 4;
-    P[i] = new Pip( r*cos( 2*PI*i/numPips ) , r*sin( 2*PI*i/numPips ) );
-  }
+  G = new Game();
+  gameTime = 0;
 }
 
 function draw() {
-  // reset frameTime
-  var dt = millis()  - frameTime
-  avgFrameTime = 0.99*avgFrameTime + 0.01*(dt);
+  // reset avgFrameTime
+  var dt = millis()  - frameTime;
+  if( dt < avgFrameTime*3 ) {
+    avgFrameTime = 0.9*avgFrameTime + 0.1*(dt);
+  }
   frameTime = millis();
+  // roll forward gameTime
+  gameTime += avgFrameTime;
+  //console.log( avgFrameTime );
   
   // draw background
   //background( bgColor );
@@ -256,14 +351,10 @@ function draw() {
   noStroke();
   rect( ulx , uly , winExt , winExt );
   
+  // evolve the game
+  G.evolve( avgFrameTime );
   
-  // draw pips
-  fill( innerPipColor );
-  for( var i = 0 ; i < numPips ; i++ ) {
-    var r = 4 + random( -0.02 , 0.02 );
-    P[i].evolve( avgFrameTime );
-    
-    strokeWeight(2);
-    P[i].draw();
-  }
+  // draw the game
+  G.draw();
+  
 }
