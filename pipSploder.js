@@ -48,6 +48,8 @@ function setupGlobalVariables() {
   
   // PIP VARIABLES
   {
+    // Pip size
+    pipSize = 0.07;
     // Pip transparency
     pipAlpha = 255;
     // inner Pip transparency
@@ -55,14 +57,14 @@ function setupGlobalVariables() {
     // inner pip color
     innerPipColor = color( 0 , 0 , 0 , innerPipAlpha );
     // pip outline thickness
-    pipLineWeight = 0.06;
+    pipLineWeight = 0.02;
     // speed values
     minDPA = 0.0003;
     maxDPA = 0.0003;
     // wiggle values
-    minWR = 0.02;
+    minWR = 0.03;
     maxWR = 0.03;
-    minDWA = 0.010;
+    minDWA = 0.017;
     maxDWA = 0.020;
     // transition time (ms)
     transTime = 1500;
@@ -79,7 +81,7 @@ function setupGlobalVariables() {
     // background transparency
     bgAlpha = 255;
     // background color
-    bgColor = color( 255 , 255 , 255 , bgAlpha );
+    bgColor = color( 64 , 64 , 64 , bgAlpha );
     // game field transparency
     gfAlpha = 10;
     // game field color
@@ -164,7 +166,7 @@ var Pip = function( ) {
   // lateral direction (normalized p5.Vector)
   this.ld = createVector( -this.fd.y , this.fd.x );
   // size value
-  this.s = 0.1;
+  this.s = pipSize;
   // path radius
   this.pr = 4;
   // path angle
@@ -181,7 +183,7 @@ var Pip = function( ) {
   this.x = createVector( (radLevel[this.level] + this.wr*(0.5+0.5*cos( this.wa ) ) )*cos( this.pa ) ,
                          (radLevel[this.level]  + this.wr*(0.5+0.5*cos( this.wa ) ) )*sin( this.pa ) );
   // pip color
-  this.strokeColor = hsvColor( random(0,360) , random(0.25,0.75) , random(0.75,1) , pipAlpha );
+  this.strokeColor = hsvColor( random(0,360) , random(0.5,0.5) , random(1,1) , pipAlpha );
   this.fillColor = color( red(this.strokeColor) , green(this.strokeColor) , blue(this.strokeColor) , innerPipAlpha );
   // pip level
   this.level = 0;
@@ -370,7 +372,20 @@ function setup() {
   setupGlobalVariables();
   createCanvas( xRes , yRes );
   
+  // initialize game
   G = new Game();
+  
+  // draw background
+  background(bgColor);
+  var c1 = color( 0 , 0 , 0 , 255 );
+  var I = 40;
+  var dMax = sqrt( xRes*xRes + yRes*yRes );
+  for( var i = 0 ; i < I ; i++ ) {
+    var d = lerp( dMax , minRes , i/I);
+    fill( lerpColor( bgColor , c1 , i/I ) );
+    noStroke();
+    ellipse( 0.5*xRes , 0.5*yRes , d , d );
+  }
   gameTime = 0;
 }
 
@@ -391,7 +406,8 @@ function draw() {
   // draw game field
   fill( gfColor );
   noStroke();
-  rect( ulx , uly , winExt , winExt );
+  ellipse( 0.5*xRes , 0.5*yRes , minRes , minRes );
+  //rect( ulx , uly , winExt , winExt );
   
   // evolve the game
   G.evolve( avgFrameTime );
