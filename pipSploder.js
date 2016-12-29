@@ -12,6 +12,7 @@ function setupGlobalVariables() {
     yRes = windowHeight;
     minRes = min( xRes , yRes );
     maxRes = max( xRes , yRes );
+    maxDist = sqrt( minRes*minRes + maxRes*maxRes );
     winArea = xRes*yRes;
     // gamefield upper-left corner screen coordinates and gamefield extent
     // (depends on screen orientation)
@@ -110,7 +111,7 @@ function setupGlobalVariables() {
     // time of last pip added
     newPipTime = 0;
     // time between adding new pips
-    timeBetweenNewPips = 2000;
+    timeBetweenNewPips = 1000;
   }
   
   // GLOBAL OBJECTS
@@ -142,6 +143,13 @@ function setupGlobalVariables() {
     maxBlast = 1;
     // linger time
     bombLinger = 40;
+  }
+  
+  // SPLOSION VARIABLES
+  {
+    splosionLife = 3000;
+    splosionParticles = 20;
+    splosionDiam = 0.05;
   }
   
 }
@@ -319,13 +327,13 @@ var Splosion = function( x , c ) {
   this.angle = this.x.heading() % TWO_PI;
   this.radius = this.x.mag();
   // lifetime
-  this.life = 1000;
+  this.life = splosionLife;
   // birth time
   this.birth = gameTime;
   // number of particles
-  this.np = 20;
+  this.np = splosionParticles;
   // diameter of particles
-  this.pd = 0.05;
+  this.pd = splosionDiam;
   // min/max particle velocities
   this.pvMin = 0.001;
   this.pvMax = 0.002;
@@ -390,6 +398,10 @@ var Bomb = function( xd ) {
   if( this.xdd < baseRadius ) {
     this.xd = p5.Vector.mult( this.xdir , baseRadius );
     this.xdd = baseRadius;
+  }
+  if( this.xdd > radLevel[1] ) {
+    this.xd = p5.Vector.mult( this.xdir , radLevel[1] );
+    this.xdd = radLevel[1];
   }
   // normal direction
   this.xnorm = createVector( -this.xdir.y , this.xdir.x )
@@ -641,6 +653,9 @@ function draw() {
   
 
   
+  
+  
+  
   // draw game field
   fill( gfColor );
   noStroke();
@@ -648,11 +663,24 @@ function draw() {
   ellipse( 0.5*xRes , 0.5*yRes , d , d );
   //rect( ulx , uly , winExt , winExt );
   
+  
   // evolve the game
   G.evolve( avgFrameTime );
   
   // draw the game
   G.draw();
+  
+  // draw background
+  var N = 20;
+  var dr = (0.5*maxDist - 0.5*minRes)/N;
+  strokeWeight(dr+2);
+  for( var n = 0 ; n < N ; n++ ) {
+    var cv = n/N*200;
+    stroke( cv , cv , cv , 255 );
+    var r = 0.5*minRes + (n+1)*dr;
+    noFill();
+    ellipse( 0.5*xRes , 0.5*yRes , 2*r , 2*r );
+  }
   
 }
 
