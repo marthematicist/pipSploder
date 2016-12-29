@@ -1,6 +1,6 @@
 // pipSploder
 // marthematicist - 2016
-var vers = '0.08';
+var vers = '0.09';
 console.log( 'pipSploder - version ' + vers );
 
 // GLOBAL VARIABLES /////////////////////////////////////////
@@ -116,6 +116,30 @@ function setupGlobalVariables() {
   // GLOBAL OBJECTS
   {
     G = 0;
+  }
+  
+  // BASE VARIABLES
+  {
+    // base radius
+    baseRadius = 1;
+  }
+  
+  // BOMB VARIABLES
+  {
+    // bomb tansparency
+    bombAlpha = 255;
+    // bomb color
+    bombColor = color( 255 , 255 , 255 , bombAlpha );
+    // bomb stroke weight
+    bombWeight = 0.08;
+    // bomb travel diameter
+    bombDiam = 0.06;
+    // bomb velocity
+    bombVel = 0.003;
+    // blast velocity
+    blastVel = 0.001;
+    // maximum blast radius
+    maxBlast = 1;
   }
   
 }
@@ -342,7 +366,94 @@ var Splosion = function( x , y , c ) {
       }
     }
   }
+};
+
+// CLASS: Bomb
+var Bomb = function( xd ) {
+  // OBJECT VARIABLES:
+  // mode: trav , blast , dead
+  this.mode = 'trav';
+  // destination (p5.Vector)
+  this.xd = createVector( xd.x , xd.y );
+  // destination distance (from center)
+  this.xdd = this.xd.mag();
+  // direction (p5.Vector)
+  this.xdir = createVector( xd.x , xd.y );
+  this.xdir.normalize();
+  // heading
+  this.ang = this.xdir.heading() % TWO_PI;
+  // make sure destination is far enough from center
+  if( this.xdd < baseRadius ) {
+    this.xd = p5.Vector.mult( this.xdir , baseRadius );
+    this.xdd = baseRadius;
+  }
+  // normal direction
+  this.xnorm = createVector( -this.xdir.y , this.xdir.x )
+  // position
+  this.xp = p5.Vector.mult( this.xdir , baseRadius );
+  // position distance (from center)
+  this.xpd = this.xp.mag();
+  // originating position
+  this.xo = createVector( this.xp.x , this.xp.y );
+  // velocity (trav)
+  this.v = p5.Vector.mult( this.xdir , bombVel );
+  // blast radius
+  this.br = 0;
+  // alive?
+  this.alive = true;
   
+  
+  // CLASS METHODS:
+  // Bomb method: draw
+  // draws the bomb
+  this.draw = function() {
+    if( this.mode === 'trav') {
+      fill( bombColor );
+      noStroke();
+      var v1 =  p5.Vector.mult( this.xnorm , 0.1*sin(4*PI*(this.xpd-baseRadius)/(this.xdd-baseRadius) ) ) ;
+      var v3 = gf2winVect( p5.Vector.add( this.xp , v1 ) );
+      var v4 = gf2winVect( p5.Vector.sub( this.xp , v1 ) );
+      ellipse( v3.x , v3.y , bombDiam*gf2winFactor , bombDiam*gf2winFactor );
+      ellipse( v4.x , v4.y , bombDiam*gf2winFactor , bombDiam*gf2winFactor );
+    }
+    if( this.mode === 'blast' ) {
+      noFill();
+      stroke( bombColor );
+      strokeWeight( bombWeight*gf2winFactor );
+      var v = gf2winVect( this.xd );
+      var d = this.br*2*gf2winFactor;
+      ellipse( v.x , v.y , d , d );
+    }
+  };
+  // Bomb method: evolve
+  // evolves the bomb
+  this.evolve = function( dt ) {
+    // if in travel mode
+    if( this.mode === 'trav' ) {
+      // move it
+      this.xp.add( p5.Vector.mult( this.v , dt ) );
+      this.xpd = this.xp.mag();
+      // if it has traveled past the destination,
+      // set postition to destination and change to
+      // blast mode
+      if( this.xp.mag() > this.xdd ) {
+        this.xp = createVector( this.xd.x , this.xd.y );
+        this.mode = 'blast';
+      }
+    }
+    // if in blast mode
+    if( this.mode === 'blast' ) {
+      // increase blast radius
+      this.br += blastVel * dt;
+      // if blast radius has exceeded maximum, set
+      // it to max and kill the bomb
+      if( this.br > maxBlast ) {
+        this.br = maxBlast;
+        this.mode = 'dead';
+        this.alive = false;
+      }
+    }
+  }
 };
 
 // CLASS: Game /////////////////////////////////////////////////////////////////
@@ -359,6 +470,10 @@ var Game = function() {
   this.numS = 0;
   // array of Splosions
   this.splosions = [];
+  // number of Bombs
+  this.numB = 0;
+  // array of Bombs
+  this.bombs = [];
   
   // CLASS METHODS:
   // Game method: evolve
@@ -369,6 +484,10 @@ var Game = function() {
       this.pips[ this.numP ] = new Pip();
       this.numP++;
       newPipTime = gameTime;
+    }
+    // evolve all Bombs
+    for( var i = 0 ; i < this.numB ; i++ ) {
+      this.bombs[i].evolve( dt );
     }
     // evolve all Pips
     for( var i = 0 ; i < this.numP ; i++ ) {
@@ -402,6 +521,10 @@ var Game = function() {
     for( var i = 0 ; i < this.numS ; i++ ) {
       this.splosions[i].draw();
     }
+      // draw all Bombs
+    for( var i = 0 ; i < this.numB ; i++ ) {
+      this.bombs[i].draw();
+    }
   };
   // Game method: removeDeadObj
   // removes dead Pips, Splosions
@@ -430,6 +553,18 @@ var Game = function() {
       this.splosions.splice( ind[i] , 1 );
     }
     this.numS -= ind.length;
+    // remove dead Bombs
+    ind = [];
+    for( var i = 0 ; i < this.numB ; i++ ) {
+      if( !this.bombs[i].alive ) {
+        append( ind , i );
+      }
+    }
+    reverse( ind );
+    for( var i = 0 ; i < ind.length ; i++ ) {
+      this.bombs.splice( ind[i] , 1 );
+    }
+    this.numB -= ind.length;
   }
   
 };
@@ -475,9 +610,15 @@ function draw() {
   
 }
 
-function mouseClicked() {
-  var c = hsvColor( random(0,360) , random(0.5,0.5) , random(1,1) , pipAlpha );
+function touchStarted() {
   var m = win2gfVect( createVector( mouseX , mouseY ) );
-  append( G.splosions , new Splosion( m.x , m.y , c ) );
-  G.numS++;
+  append( G.bombs , new Bomb( m ) );
+  G.numB++;
 }
+/*
+function touchStarted() {
+  var m = win2gfVect( createVector( mouseX , mouseY ) );
+  append( G.bombs , new Bomb( m ) );
+  G.numB++;
+}
+*/
