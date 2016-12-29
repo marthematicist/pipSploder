@@ -73,8 +73,8 @@ function setupGlobalVariables() {
     // transition time (ms)
     transTime = 1500;
     // min/max time per level (ms)
-    typMin = 5000;
-    typMax = 10000;
+    typMin = 2000;
+    typMax = 5000;
     minTimeAtLevel = [ 0 , typMin ,typMin , typMin , typMin , typMin , typMin , typMin ];
     maxTimeAtLevel = [ 0 , typMax ,typMax , typMax , typMax , typMax , typMax , typMax ];
   }
@@ -111,7 +111,7 @@ function setupGlobalVariables() {
     // time of last pip added
     newPipTime = 0;
     // time between adding new pips
-    timeBetweenNewPips = 1000;
+    timeBetweenNewPips = 500;
   }
   
   // GLOBAL OBJECTS
@@ -128,21 +128,20 @@ function setupGlobalVariables() {
   // BOMB VARIABLES
   {
     // bomb tansparency
-    bombAlpha = 196;
-    // bomb color
-    bombColor = color( 255 , 255 , 255 , bombAlpha );
+    bombTravelAlpha = 255;
+    bombBlastAlpha = 100;
     // bomb stroke weight
-    bombWeight = 0.08;
+    bombWeight = 0.2;
     // bomb travel diameter
-    bombDiam = 0.06;
+    bombDiam = 0.09;
     // bomb velocity
     bombVel = 0.003;
     // blast velocity
-    blastVel = 0.0012;
+    blastVel = 0.0022;
     // maximum blast radius
     maxBlast = 1;
     // linger time
-    bombLinger = 40;
+    bombLinger = 200;
   }
   
   // SPLOSION VARIABLES
@@ -241,6 +240,7 @@ var Pip = function( ) {
   // draws the Pip to the canvas
   this.draw = function() {
     if( this.alive ) {
+      /*
       var v0 = gf2winVect( p5.Vector.add( this.x , p5.Vector.mult( this.fd , this.s ) ) );
       var v1 = gf2winVect( p5.Vector.add( this.x , p5.Vector.mult( this.ld , this.s ) ) );
       var v2;
@@ -259,6 +259,13 @@ var Pip = function( ) {
       vertex( v2.x , v2.y );
       vertex( v3.x , v3.y );
       endShape( CLOSE );
+      */
+      strokeWeight(pipLineWeight*gf2winFactor);
+      stroke( this.strokeColor );
+      fill( this.fillColor );
+      var v0 = gf2winVect( this.x );
+      ellipse( v0.x , v0.y , this.s*gf2winFactor*2 , this.s*gf2winFactor*2 );
+      
     }
   };
   // Pip method: evolve
@@ -307,12 +314,16 @@ var Pip = function( ) {
   // Pip method: moveTo
   // moves the Pip to a new location and orients it based on previous location
   this.moveTo = function( x , y ) {
+    /*
     var newX = createVector( x , y );
     var newFD = p5.Vector.sub( newX , this.x );
     newFD.normalize();
+    */
     this.x = createVector( x , y );
+    /*
     this.fd = createVector( newFD.x , newFD.y );
     this.ld = createVector( -newFD.y , newFD.x );
+    */
   };
 };
 
@@ -419,8 +430,6 @@ var Bomb = function( xd ) {
   this.alive = true;
   // time at start of dying
   this.dyingTime = 0;
-  // color
-  this.color = hsvColor( random(0,360) , random(0.5,0.5) , random(1,1) , bombAlpha );
   
   
   // CLASS METHODS:
@@ -428,19 +437,22 @@ var Bomb = function( xd ) {
   // draws the bomb
   this.draw = function() {
     if( this.mode === 'trav') {
-      fill( bombColor );
       noStroke();
       var v1 =  p5.Vector.mult( this.xnorm , 0.1*sin(4*PI*(this.xpd-baseRadius)/(this.xdd-baseRadius) ) ) ;
       var v3 = gf2winVect( p5.Vector.add( this.xp , v1 ) );
       var v4 = gf2winVect( p5.Vector.sub( this.xp , v1 ) );
+      fill(  hsvColor( random(0,360) , 0.5 , 1 , bombTravelAlpha ) );
       ellipse( v3.x , v3.y , bombDiam*gf2winFactor , bombDiam*gf2winFactor );
+      fill(  hsvColor( random(0,360) , 0.5 , 1 , bombTravelAlpha ) );
       ellipse( v4.x , v4.y , bombDiam*gf2winFactor , bombDiam*gf2winFactor );
     }
     if( this.mode === 'blast' ) {
       noFill();
-      stroke( bombColor );
+      stroke( hsvColor( random(0,360) , 0.5 , 1 , bombBlastAlpha ) );
       strokeWeight( bombWeight*gf2winFactor );
-      var v = gf2winVect( this.xd );
+      var a = 0.1;
+      var rx = createVector( this.xd.x + random(-a,a) , this.xd.y + random(-a,a) );
+      var v = gf2winVect( rx );
       var d = this.br*2*gf2winFactor;
       ellipse( v.x , v.y , d , d );
     }
@@ -673,19 +685,16 @@ function draw() {
   G.draw();
   
   // draw background
-  var N = 40;
-  var dr = (0.5*maxDist - 0.5*minRes)/N;
-  strokeWeight(dr+2);
-  for( var n = 0 ; n < N ; n++ ) {
-    var cv = n/N*200;
-    var a = gameTime*gfColorSpeed;
-    //stroke( cv , cv , cv , 255 );
-    stroke( hsvColor( (a + 360*n/N)%360 , 0.8 , 0.2 , 255 ) );
-    var r = 0.5*minRes + (n+1)*dr;
-    noFill();
-    ellipse( 0.5*xRes , 0.5*yRes , 2*r , 2*r );
-  }
+  var r = 0.5*(minRes + maxDist )+0.5*gf2winFactor;
+  var t = 0.5*(maxDist - minRes );
+  strokeWeight(t);
+  stroke(64);
+  noFill();
+  ellipse( 0.5*xRes , 0.5*yRes , r , r );
   
+  if( frameCount % 100 === 0 ) {
+    console.log( 'avgFrameTime=' + avgFrameTime + ' numP=' + G.numP );
+  }
 }
 
 function touchStarted() {
