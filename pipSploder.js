@@ -29,7 +29,7 @@ function setupGlobalVariables() {
   // GAME FIELD VARIABLES
   {
     // number of Pips
-    numPips = 200;
+    numPips = 0;
     // extent of game field
     gfExt = 10;
     // border edges
@@ -41,9 +41,9 @@ function setupGlobalVariables() {
     gf2winFactor = winExt / gfExt;
     win2gfFactor = gfExt / winExt;
     // number of levels
-    numLevels = 7;
+    numLevels = 8;
     // level radii
-    radLevel = [ 4.5 , 4 , 3.5 , 3 , 2.5 , 2 , 1.5 , 1 ];
+    radLevel = [ 4.75 , 4.25 , 3.75 , 3.25 , 2.75 , 2.25 , 1.75 , 1.25 , 0.75 ];
   }
   
   // PIP VARIABLES
@@ -51,7 +51,7 @@ function setupGlobalVariables() {
     // random color parameters
     minc = 128;
     maxc = 255;
-    minColorDev = 64;
+    minColorDev = 128;
     // speed values
     minDPA = 0.0003;
     maxDPA = 0.0004;
@@ -63,10 +63,10 @@ function setupGlobalVariables() {
     // transition time (ms)
     transTime = 1500;
     // min/max time per level (ms)
-    typMin = 10000;
-    typMax = 15000;
-    minTimeAtLevel = [ 0 , typMin , typMin , typMin , typMin , typMin , typMin ];
-    maxTimeAtLevel = [ 200000 , typMax , typMax , typMax , typMax , typMax , typMax ];
+    typMin = 15000;
+    typMax = 20000;
+    minTimeAtLevel = [ 0 , typMin ,typMin , typMin , typMin , typMin , typMin , typMin ];
+    maxTimeAtLevel = [ 0 , typMax ,typMax , typMax , typMax , typMax , typMax , typMax ];
   }
   
   
@@ -86,6 +86,10 @@ function setupGlobalVariables() {
     gfAlpha = 20;
     // game field color
     gfColor = color( 0 , 0 , 0 , gfAlpha );
+    // game field line alpha
+    gfLineAlpha = 255;
+    // game field line color
+    gfLineColor = color( 255 , 255 , 255 , gfLineAlpha );
   }
   
   // RECORD-KEEPING VARIABLES
@@ -97,6 +101,8 @@ function setupGlobalVariables() {
   // TIME VARIABLES
   {
     gameTime = 0;
+    newPipTime = 0;
+    timeBetweenNewPips = 2000;
   }
   
   // GLOBAL OBJECTS
@@ -117,20 +123,32 @@ function win2gfVect( a ) {
 						           (a.y - uly)*win2gfFactor + yMin );
 }
 // function to choose a random color
-function randomColor( minCV , maxCV , minDev , alpha ) {
-  var colorAcceptable = false;
-  var r = 0;
-  var g = 0;
-  var b = 0;
-  while( !colorAcceptable ) {
-    r = random( minCV , maxCV );
-    g = random( minCV , maxCV );
-    b = random( minCV , maxCV );
-    var a = (r + g + b)/3;
-    var dev = sqrt( ( (a-r)*(a-r) + (a-g)*(a-g) + (a-b)*(a-b) ) / 3 );
-    if( dev > minDev ) { colorAcceptable = true; }
+function hsvColor( h , s , v , a ) {
+  var c = v*s;
+  var x = c*( 1 - abs( (h/60) % 2 - 1 ) );
+  var m = v - c;
+  var rp = 0;
+  var gp = 0;
+  var bp = 0;
+  if( 0 <= h && h < 60 ) {
+    rp = c;  gp = x , bp = 0;
   }
-  return color( r , g , b , alpha );
+  if( 60 <= h && h < 120 ) {
+    rp = x;  gp = c , bp = 0;
+  }
+  if( 120 <= h && h < 180 ) {
+    rp = 0;  gp = c , bp = x;
+  }
+  if( 180 <= h && h < 240 ) {
+    rp = 0;  gp = x , bp = c;
+  }
+  if( 240 <= h && h < 300 ) {
+    rp = x;  gp = 0 , bp = c;
+  }
+  if( 300 <= h && h < 360 ) {
+    rp = c;  gp = 0 , bp = x;
+  }
+  return color( (rp+m)*255 , (gp+m)*255 , (bp+m)*255 , a );
 }
 
 // CLASS: Pip /////////////////////////////////////////////////////////////
@@ -160,7 +178,7 @@ var Pip = function( ) {
   this.x = createVector( (radLevel[this.level] + this.wr*(0.5+0.5*cos( this.wa ) ) )*cos( this.pa ) ,
                          (radLevel[this.level]  + this.wr*(0.5+0.5*cos( this.wa ) ) )*sin( this.pa ) );
   // pip color
-  this.color = color( random(minc,maxc) , random(minc,maxc) , random(minc,maxc) , pipAlpha );
+  this.color = hsvColor( random(0,360) , 0.5 , 1 , pipAlpha );
   // pip level
   this.level = 0;
   // time at each level
@@ -276,6 +294,12 @@ var Game = function() {
   // Game method: evolve
   // evolves all Pips, Splosions
   this.evolve = function( dt ) {
+    // check if it's time for a new pip
+    if( gameTime - newPipTime > timeBetweenNewPips ) {
+      this.pips[ this.numP ] = new Pip();
+      this.numP++;
+      newPipTime = gameTime;
+    }
     // evolve all Pips
     for( var i = 0 ; i < this.numP ; i++ ) {
       this.pips[i].evolve( dt );
@@ -286,6 +310,14 @@ var Game = function() {
   // Game method: draw
   // draws all Pips, Splosions
   this.draw = function() {
+    // draw circles
+    strokeWeight( 0.01*gf2winFactor );
+    for( var i = 0 ; i < numLevels ; i++ ) {
+      stroke( gfLineColor );
+      noFill();
+      var d = ( radLevel[i] - 0.25 )*2*gf2winFactor;
+      ellipse( 0.5*xRes , 0.5*yRes , d , d );
+    }
     // draw all Pips
     fill( innerPipColor );
     for( var i = 0 ; i < this.numP ; i++ ) {
