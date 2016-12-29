@@ -42,11 +42,11 @@ function setupGlobalVariables() {
     gf2winFactor = winExt / gfExt;
     win2gfFactor = gfExt / winExt;
     // number of levels
-    numLevels = 8;
+    numLevels = 9;
     // level radii
     radLevel = [];
     for( var i = 0 ; i < numLevels+1 ; i++ ) {
-      radLevel[i] = 5.25 - 0.5*i;
+      radLevel[i] = 6 - 0.5*i;
     }
   }
   
@@ -75,8 +75,12 @@ function setupGlobalVariables() {
     // min/max time per level (ms)
     typMin = 2000;
     typMax = 5000;
-    minTimeAtLevel = [ 0 , typMin ,typMin , typMin , typMin , typMin , typMin , typMin ];
-    maxTimeAtLevel = [ 0 , typMax ,typMax , typMax , typMax , typMax , typMax , typMax ];
+    minTimeAtLevel = [ 0 ];
+    maxTimeAtLevel = [ 0 ];
+    for( var i = 1 ; i < numLevels ; i++ ) {
+      minTimeAtLevel[i] = typMin;
+      maxTimeAtLevel[i] = typMax;
+    }
   }
   
   
@@ -87,7 +91,7 @@ function setupGlobalVariables() {
     // background color
     bgColor = color( 64 , 64 , 64 , bgAlpha );
     // game field transparency
-    gfAlpha = 10;
+    gfAlpha = 5;
     // game field color
     gfColor = color( 0 , 0 , 0 , gfAlpha );
     // game field line alpha
@@ -450,9 +454,7 @@ var Bomb = function( xd ) {
       noFill();
       stroke( hsvColor( random(0,360) , 0.5 , 1 , bombBlastAlpha ) );
       strokeWeight( bombWeight*gf2winFactor );
-      var a = 0.1;
-      var rx = createVector( this.xd.x + random(-a,a) , this.xd.y + random(-a,a) );
-      var v = gf2winVect( rx );
+      var v = gf2winVect( this.xd );
       var d = this.br*2*gf2winFactor;
       ellipse( v.x , v.y , d , d );
     }
@@ -668,13 +670,16 @@ function draw() {
 
   
   
-  
+  // draw background
+  background( gfColor );
   
   // draw game field
+  /*
   fill( gfColor );
   noStroke();
   var d = 2*(radLevel[0]+0.2)*gf2winFactor;
   ellipse( 0.5*xRes , 0.5*yRes , d , d );
+  */
   //rect( ulx , uly , winExt , winExt );
   
   
@@ -685,12 +690,14 @@ function draw() {
   G.draw();
   
   // draw background
+  /*
   var r = 0.5*(minRes + maxDist )+0.5*gf2winFactor;
   var t = 0.5*(maxDist - minRes );
   strokeWeight(t);
   stroke(64);
   noFill();
   ellipse( 0.5*xRes , 0.5*yRes , r , r );
+  */
   
   if( frameCount % 100 === 0 ) {
     console.log( 'avgFrameTime=' + avgFrameTime + ' numP=' + G.numP );
