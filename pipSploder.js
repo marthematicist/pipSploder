@@ -43,7 +43,10 @@ function setupGlobalVariables() {
     // number of levels
     numLevels = 8;
     // level radii
-    radLevel = [ 4.75 , 4.25 , 3.75 , 3.25 , 2.75 , 2.25 , 1.75 , 1.25 , 0.75 ];
+    radLevel = [];
+    for( var i = 0 ; i < numLevels+1 ; i++ ) {
+      radLevel[i] = 5.25 - 0.5*i;
+    }
   }
   
   // PIP VARIABLES
@@ -283,8 +286,64 @@ var Pip = function( ) {
 
 // CLASS: Splosion /////////////////////////////////////////////////////////////
 var Splosion = function( x , y , c ) {
+  //OBJECT VARIABLES:
+  // position
+  this.x = createVector( x , y );
+  // color
+  this.color = color( red(c) , green(c) , blue(c) , alpha(c) );
+  // position (polar)
+  this.angle = this.x.heading() % TWO_PI;
+  this.radius = this.x.mag();
+  // lifetime
+  this.life = 1000;
+  // birth time
+  this.birth = gameTime;
+  // number of particles
+  this.np = 20;
+  // diameter of particles
+  this.pd = 0.05;
+  // min/max particle velocities
+  this.pvMin = 0.001;
+  this.pvMax = 0.002;
+  // array of particle positions and velocities
+  this.px = [];
+  this.pv = [];
+  for( var i = 0 ; i < this.np ; i++ ) {
+    this.px[i] = createVector( x , y );
+    this.pv[i] = p5.Vector.random2D();
+    this.pv[i].mult( random( this.pvMin , this.pvMax ) );
+  }
+  // is it alive?
+  this.alive = true;
   
-}
+  // CLASS METHODS:
+  // Splosion method: draw
+  // draws the Splosion
+  this.draw = function() {
+    noStroke();
+    var c = color( red(this.color) , green(this.color) , blue(this.color) ,
+                   255*(1-(gameTime-this.birth)/this.life) );
+    fill( c );
+    for( var i = 0 ; i < this.np ; i++ ) {
+      var p = gf2winVect( this.px[i] );
+      ellipse( p.x , p.y , this.pd*gf2winFactor , this.pd*gf2winFactor );
+    }
+  };
+  // Splosion method: evolve
+  // evolves the Splosion
+  this.evolve = function( dt ) {
+    // check if life time is up, and if so kill it
+    if( gameTime - this.birth > this.life ) {
+      this.alive = false;
+    } else {
+      // if it is still alive, move it
+      for( var i = 0 ; i < this.np ; i++ ) {
+        this.px[i].add( p5.Vector.mult( this.pv[i] , dt ) );
+      }
+    }
+  }
+  
+};
 
 // CLASS: Game /////////////////////////////////////////////////////////////////
 var Game = function() {
@@ -315,6 +374,10 @@ var Game = function() {
     for( var i = 0 ; i < this.numP ; i++ ) {
       this.pips[i].evolve( dt );
     }
+    // evolve all Splosions
+    for( var i = 0 ; i < this.numS ; i++ ) {
+      this.splosions[i].evolve( dt );
+    }
     // remove dead objects
     this.removeDeadObj();
   };
@@ -334,6 +397,10 @@ var Game = function() {
     fill( innerPipColor );
     for( var i = 0 ; i < this.numP ; i++ ) {
       this.pips[i].draw();
+    }
+    // draw all Splosions
+    for( var i = 0 ; i < this.numS ; i++ ) {
+      this.splosions[i].draw();
     }
   };
   // Game method: removeDeadObj
@@ -374,19 +441,10 @@ function setup() {
   
   // initialize game
   G = new Game();
+  gameTime = 0;
   
   // draw background
-  background(bgColor);
-  var c1 = color( 0 , 0 , 0 , 255 );
-  var I = 40;
-  var dMax = sqrt( xRes*xRes + yRes*yRes );
-  for( var i = 0 ; i < I ; i++ ) {
-    var d = lerp( dMax , minRes , i/I);
-    fill( lerpColor( bgColor , c1 , i/I ) );
-    noStroke();
-    ellipse( 0.5*xRes , 0.5*yRes , d , d );
-  }
-  gameTime = 0;
+  background( bgColor );
 }
 
 function draw() {
@@ -400,13 +458,13 @@ function draw() {
   gameTime += avgFrameTime;
   //console.log( avgFrameTime );
   
-  // draw background
-  //background( bgColor );
+
   
   // draw game field
   fill( gfColor );
   noStroke();
-  ellipse( 0.5*xRes , 0.5*yRes , minRes , minRes );
+  var d = 2*(radLevel[0]+0.2)*gf2winFactor;
+  ellipse( 0.5*xRes , 0.5*yRes , d , d );
   //rect( ulx , uly , winExt , winExt );
   
   // evolve the game
@@ -415,4 +473,11 @@ function draw() {
   // draw the game
   G.draw();
   
+}
+
+function mouseClicked() {
+  var c = hsvColor( random(0,360) , random(0.5,0.5) , random(1,1) , pipAlpha );
+  var m = win2gfVect( createVector( mouseX , mouseY ) );
+  append( G.splosions , new Splosion( m.x , m.y , c ) );
+  G.numS++;
 }
