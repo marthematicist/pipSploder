@@ -232,7 +232,7 @@ function setupGlobalVariables() {
     // pow meter max
     pmMax = 100;
     // pow meter value
-    pmValue = 0;
+    pmValue =0;
     // pow meter radius
     pmRadius = 1;
     // pow  button radius
@@ -266,13 +266,19 @@ function setupGlobalVariables() {
     // score text size
     scoreTextSize = 0.60;
     // score transparency
-    scoreAlpha = 255;
+    scoreAlpha = 128;
     // score color
     scoreColor = color( 255 , 255 , 255 , scoreAlpha );
+    scorebgAlpha = 128;
+    scorebgColor = color( 30 , 30 , 30 , scorebgAlpha);
     // constants
     LOG10 = log(10);
     LOG1000 = log(1000);
   }
+  
+  // initialize game
+  G = new Game();
+  gameTime = 0;
 }
 
 // UTILITY FUNCTIONS //////////////////////////////////////////////////////
@@ -813,10 +819,8 @@ function setup() {
   setupGlobalVariables();
   createCanvas( xRes , yRes );
   
-  // initialize game
-  G = new Game();
-  gameTime = 0;
   
+  textStyle( BOLD );
   // draw background
   background( 30 , 30 , 30 , 255 );
 }
@@ -861,7 +865,7 @@ function draw() {
     strokeWeight( baseWeight*gf2winFactor );
     ellipse( xC , yC , d , d );
     
-    // draw push meter
+    // draw pow meter
     if( pmValue > 0 ) {
       d = pmRadius * gf2winFactor * 2;
       noFill();
@@ -870,12 +874,16 @@ function draw() {
       arc( xC , yC , d , d , 0 , TWO_PI*pmValue/pmMax );
     }
     
-    // draw push button (if pm is full)
+    // draw pow button (if pm is full)
     if( pmValue >= pmMax ) {
       noStroke()
       fill( pbColor );
       d = pbRadius * gf2winFactor * 2;
       ellipse( xC , yC , d , d );
+      textAlign( CENTER , CENTER );
+      fill( lifeColor );
+      textSize( 0.3*gf2winFactor );
+      text( 'BOMBE!' , xC , yC );
     }
     
     // draw life meter
@@ -905,7 +913,7 @@ function draw() {
     // draw score
     var cv = (gameTime*0.05)%360;
     var scoreText = numberWithCommas( gameScore );
-    fill( color( red(gfColor) , green(gfColor) , blue(gfColor) , 196 ) );
+    fill( scorebgColor );
     noStroke();
     var scoreWidth = ( floor(log(gameScore+1)/LOG10+1)*.55 + floor(log(gameScore+1)/LOG1000)*0.32 )*scoreTextSize*gf2winFactor;
     rect( 0 , 0 , scoreWidth , scoreTextSize*gf2winFactor );
@@ -919,11 +927,20 @@ function draw() {
     noStroke();
     fill(255);
     textAlign( CENTER );
-  	textSize( minRes*0.1 );
+  	textSize( minRes*0.08 );
   	var scoreText = numberWithCommas( gameScore );
   	text( 'GAME OVER\nSCORE: ' + scoreText , xC , yRes*0.25 );
   	textSize( minRes*0.05 );
   	text( 'you survived ' + round(timeAtDeath/10)/100 + ' seconds'  , xC , yRes*0.75 );
+  	noStroke()
+    fill( pbColor );
+    d = pmRadius * gf2winFactor * 2;
+    ellipse( xC , yC , d , d );
+    textAlign( CENTER , CENTER );
+    fill( lifeColor );
+    textSize( 0.4*gf2winFactor );
+    text( 'RESTART' , xC , yC );
+    
   }
 
 
@@ -937,16 +954,21 @@ function touchStarted() {
   if( gameTime - clickTime > minTimeBetweenClicks ) {
     clickTime = gameTime;
     var m = win2gfVect( createVector( mouseX , mouseY ) );
-    if( (pmValue >= pmMax) && ( m.mag() <= pmRadius ) ) {
-      G.pow();
-      pmValue = 0;
-    } else {
-      if( playerBombs >= 1 ) {
-        var m = win2gfVect( createVector( mouseX , mouseY ) );
-        append( G.bombs , new Bomb( m ) );
-        G.numB++;
-        playerBombs--;
+    if( gameOn ) {
+      if( (pmValue >= pmMax) && ( m.mag() <= pmRadius ) ) {
+        G.pow();
+        pmValue = 0;
+      } else {
+        if( playerBombs >= 1 ) {
+          var m = win2gfVect( createVector( mouseX , mouseY ) );
+          append( G.bombs , new Bomb( m ) );
+          G.numB++;
+          playerBombs--;
+        }
       }
+    } else if( m.mag() <= pmRadius ) {
+      background(0);
+      setupGlobalVariables();
     }
   }
 }
