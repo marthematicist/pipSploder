@@ -1,6 +1,6 @@
 // pipSploder
 // marthematicist - 2016
-var vers = '0.12';
+var vers = '0.15';
 console.log( 'pipSploder - version ' + vers );
 
 // GLOBAL VARIABLES /////////////////////////////////////////
@@ -122,6 +122,15 @@ function setupGlobalVariables() {
     minTimeBetweenClicks = 200;
     // time of last click
     clickTime = 0;
+    // time between speeding up
+    speedUpInterval = 20000;
+    // last time sped up
+    speedUpTime = 0;
+    // change in time between adding new pips
+    timeBetweenNewPipsFactor = 0.9;
+    // change in time at level factor
+    timeAtLevelFactor = 0.8;
+    
   }
   
   // GLOBAL OBJECTS
@@ -611,6 +620,19 @@ var Game = function() {
     this.removeDeadObj();
     // check if game is over
     if( playerLife <= -1 ) { gameOn = false; }
+    // check if it's time to speed up
+    if( gameTime - speedUpTime > speedUpInterval ) {
+      speedUpTime = gameTime;
+      timeBetweenNewPips *= timeBetweenNewPipsFactor;
+      typMin *= timeAtLevelFactor;
+      typMax *= timeAtLevelFactor;
+      for( var i = 1 ; i < numLevels ; i++ ) {
+        minTimeAtLevel[i] = typMin;
+        maxTimeAtLevel[i] = typMax;
+      }
+      console.log( 'timeBetweenNewPips=' + timeBetweenNewPips );
+      console.log( 'time at level: ' + typMin + ' - ' + typMax );
+    }
     
   };
   // Game method: draw
@@ -758,7 +780,7 @@ function draw() {
 
 
   // log out data periodically
-  if( frameCount % 100 === 0 ) {
+  if( frameCount % 500 === 0 ) {
     console.log( 'avgFrameTime=' + avgFrameTime + ' numP=' + G.numP );
   }
 }
