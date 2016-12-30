@@ -1,6 +1,6 @@
 // pipSploder
 // marthematicist - 2016
-var vers = '0.27';
+var vers = '0.28';
 console.log( 'pipSploder - version ' + vers );
 
 // GLOBAL VARIABLES /////////////////////////////////////////
@@ -230,9 +230,9 @@ function setupGlobalVariables() {
     // pow button radius
     pbColor = color( 255 , 255 , 64  , pmAlpha );
     // pow meter max
-    pmMax = 0;
+    pmMax = 100;
     // pow meter value
-    pmValue = 100;
+    pmValue = 0;
     // pow meter radius
     pmRadius = 1;
     // pow  button radius
