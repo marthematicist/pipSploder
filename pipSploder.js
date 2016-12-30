@@ -172,9 +172,12 @@ function setupGlobalVariables() {
     gameOn = true;
     // base transparency/color
     baseAlpha = 200;
-    baseColor = color( 30 , 30 , 30 , baseAlpha );
+    baseColor = color( 0 , 0 , 0 , baseAlpha );
+    baseStroke = color( 80 , 80 , 80 , baseAlpha );
     // base radius
     baseRadius = 1.5;
+    // base weight
+    baseWeight = 0.03;
     // LIFE METER
     // maximum life
     maxLife = 20;
@@ -215,6 +218,25 @@ function setupGlobalVariables() {
     bmAnglePerUnit = TWO_PI / maxBombs;
     // bomb meter angle displayed per unit
     bmAngleDisplayed = bmAnglePerUnit*bmRatio;
+    // PUSH METER
+    // push meter transparency and color
+    pmAlpha = 200;
+    pmColor = color( 255 , 128 , 0 , pmAlpha );
+    // push button radius
+    pbColor = color( 255 , 255 , 64  , pmAlpha );
+    // push meter max
+    pmMax = 10;
+    // push meter value
+    pmValue = 10;
+    // push meter radius
+    pmRadius = 1.05;
+    // push  button radius
+    pbRadius = 0.90;
+    // push meter weight
+    pmWeight = 0.05;
+    // levels Pips are pushed per push
+    levelsPerPush = 2;
+    
   }
 }
 
@@ -567,6 +589,28 @@ var Game = function() {
   this.bombs = [];
   
   // CLASS METHODS:
+  // Game method: push
+  // pushes all Pips up some levels (levelsPerPush)
+  this.push = function() {
+    // parse through all Pips
+    for( var i = 0 ; i < this.numP ; i++ ) {
+      var s = this.pips[i].dpa * radLevel[this.pips[i].level] / radLevel[0];
+      this.pips[i].level -= levelsPerPush;
+      if( this.pips[i].level < 0 ) {
+        this.pips[i].alive = false;
+        append( this.splosions , new Splosion( this.pips[i].x , this.pips[i].strokeColor ) );
+              this.numS++;
+      } else if( this.pips[i].level === 0 ) {
+        this.pips[i].transitioning = true;
+        this.pips[i].transStart = gameTime;
+        this.dpa = random( minDPA , maxDPA );
+      } else if( this.pips[i].level > 0 ) {
+        this.pips[i].transitioning = false;
+        this.pips[i].levelStart = gameTime;
+        this.dpa = s / ( radLevel[this.pips[i].level] / radLevel[0]);
+      }
+    }
+  }
   // Game method: checkBlasts
   // checks whether blasts have killed any pips
   this.checkBlasts = function() {
@@ -586,6 +630,8 @@ var Game = function() {
               this.pips[p].alive = false;
               append( this.splosions , new Splosion( this.pips[p].x , this.pips[p].strokeColor ) );
               this.numS++;
+              pmValue++;
+              if( pmValue > pmMax ) { pmValue = pmMax; }
             }
           }
         }
@@ -748,9 +794,28 @@ function draw() {
     // draw the base
     fill( baseColor );
     var d = 2*baseRadius*gf2winFactor;
-    noStroke();
+    stroke( baseStroke );
+    strokeWeight( baseWeight*gf2winFactor );
     ellipse( xC , yC , d , d );
-    // draw life ring
+    
+    // draw push meter
+    if( pmValue > 0 ) {
+      d = pmRadius * gf2winFactor * 2;
+      noFill();
+      stroke( pmColor );
+      strokeWeight( pmWeight*gf2winFactor );
+      arc( xC , yC , d , d , 0 , TWO_PI*pmValue/pmMax );
+    }
+    
+    // draw push button (if pm is full)
+    if( pmValue >= pmMax ) {
+      noStroke()
+      fill( pbColor );
+      d = pbRadius * gf2winFactor * 2;
+      ellipse( xC , yC , d , d );
+    }
+    
+    // draw life meter
     d = lifeRadius * gf2winFactor * 2;
     noFill();
     stroke( lifeColor );
@@ -795,11 +860,17 @@ function draw() {
 function touchStarted() {
   if( gameTime - clickTime > minTimeBetweenClicks ) {
     clickTime = gameTime;
-    if( playerBombs >= 1 ) {
-      var m = win2gfVect( createVector( mouseX , mouseY ) );
-      append( G.bombs , new Bomb( m ) );
-      G.numB++;
-      playerBombs--;
+    var m = win2gfVect( createVector( mouseX , mouseY ) );
+    if( (pmValue >= pmMax) && ( m.mag() <= pmRadius ) ) {
+      G.push();
+      pmValue = 0;
+    } else {
+      if( playerBombs >= 1 ) {
+        var m = win2gfVect( createVector( mouseX , mouseY ) );
+        append( G.bombs , new Bomb( m ) );
+        G.numB++;
+        playerBombs--;
+      }
     }
   }
 }
