@@ -1,6 +1,6 @@
 // pipSploder
 // marthematicist - 2016
-var vers = '0.17';
+var vers = '0.25';
 console.log( 'pipSploder - version ' + vers );
 
 // GLOBAL VARIABLES /////////////////////////////////////////
@@ -46,9 +46,12 @@ function setupGlobalVariables() {
     // number of levels
     numLevels = 9;
     // level radii
+    maxRadius = 4.75;
+    minRadius = 1.1;
+    dRadius = ( maxRadius - minRadius ) / numLevels;
     radLevel = [];
     for( var i = 0 ; i < numLevels+1 ; i++ ) {
-      radLevel[i] = 6 - 0.5*i;
+      radLevel[i] = maxRadius - dRadius*(i-1);
     }
   }
   
@@ -130,6 +133,8 @@ function setupGlobalVariables() {
     timeBetweenNewPipsFactor = 0.9;
     // change in time at level factor
     timeAtLevelFactor = 0.8;
+    // change in pip speed factor
+    pipSpeedChangeFactor = 1.1;
     // time at death
     timeAtDeath = 0;
     
@@ -177,7 +182,7 @@ function setupGlobalVariables() {
     // base radius
     baseRadius = 1.75;
     // base weight
-    baseWeight = 0.05;
+    baseWeight = 0.03;
     // LIFE METER
     // maximum life
     maxLife = 20;
@@ -225,9 +230,9 @@ function setupGlobalVariables() {
     // pow button radius
     pbColor = color( 255 , 255 , 64  , pmAlpha );
     // pow meter max
-    pmMax = 10;
+    pmMax = 100;
     // pow meter value
-    pmValue = 10;
+    pmValue = 0;
     // pow meter radius
     pmRadius = 1;
     // pow  button radius
@@ -688,8 +693,11 @@ var Game = function() {
         minTimeAtLevel[i] = typMin;
         maxTimeAtLevel[i] = typMax;
       }
+      minDPA *= pipSpeedChangeFactor;
+      maxDPA *= pipSpeedChangeFactor;
       console.log( 'timeBetweenNewPips=' + timeBetweenNewPips );
       console.log( 'time at level: ' + typMin + ' - ' + typMax );
+      
     }
     // check if it's time to turn off pow
     if( paOn && (gameTime - paTime > paDuration ) ) {
@@ -706,7 +714,7 @@ var Game = function() {
       var a = gameTime*gfColorSpeed;
       stroke( hsvColor( (a + 360*i/numLevels)%360 , 0.25 , 1 , gfLineAlpha ) );
       noFill();
-      var d = ( radLevel[i] - 0.25 )*2*gf2winFactor;
+      var d = ( radLevel[i] - 0.5*dRadius )*2*gf2winFactor;
       ellipse( xC , 0.5*yRes , d , d );
     }
     // draw all Bombs
