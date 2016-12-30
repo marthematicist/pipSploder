@@ -1,6 +1,6 @@
 // pipSploder
 // marthematicist - 2016
-var vers = '0.36';
+var vers = '0.37';
 console.log( 'pipSploder - version ' + vers );
 
 // GLOBAL VARIABLES /////////////////////////////////////////
@@ -723,6 +723,7 @@ var Game = function() {
       gameOn = false;
       timeAtDeath = gameTime;
       this.splosions = [];
+      this.numS = 0;
       for( var i = 0 ; i < 10 ; i++ ) {
         var c = hsvColor( random(0,360) , 0.5 , 1 , pipAlpha );
         var x = createVector( 0 , 0 );
