@@ -1,6 +1,6 @@
 // pipSploder
 // marthematicist - 2016
-var vers = '0.15';
+var vers = '0.17';
 console.log( 'pipSploder - version ' + vers );
 
 // GLOBAL VARIABLES /////////////////////////////////////////
@@ -75,8 +75,8 @@ function setupGlobalVariables() {
     // transition time (ms)
     transTime = 1500;
     // min/max time per level (ms)
-    typMin = 2000;
-    typMax = 5000;
+    typMin = 4000;
+    typMax = 8000;
     minTimeAtLevel = [ 0 ];
     maxTimeAtLevel = [ 0 ];
     for( var i = 1 ; i < numLevels ; i++ ) {
@@ -117,7 +117,7 @@ function setupGlobalVariables() {
     // time of last pip added
     newPipTime = 0;
     // time between adding new pips
-    timeBetweenNewPips = 500;
+    timeBetweenNewPips = 800;
     // min time between clicks
     minTimeBetweenClicks = 200;
     // time of last click
@@ -130,6 +130,8 @@ function setupGlobalVariables() {
     timeBetweenNewPipsFactor = 0.9;
     // change in time at level factor
     timeAtLevelFactor = 0.8;
+    // time at death
+    timeAtDeath = 0;
     
   }
   
@@ -202,7 +204,7 @@ function setupGlobalVariables() {
     // player's number of bombs
     playerBombs = maxBombs;
     // bomb build speed
-    bombBuildSpeed = 0.0007;
+    bombBuildSpeed = 0.0009;
     // bomb meter radius
     bmRadius = 1.20;
     // bomb meter weight
@@ -619,7 +621,10 @@ var Game = function() {
     // remove dead objects
     this.removeDeadObj();
     // check if game is over
-    if( playerLife <= -1 ) { gameOn = false; }
+    if( playerLife <= -1 ) {
+      gameOn = false;
+      timeAtDeath = gameTime;
+    }
     // check if it's time to speed up
     if( gameTime - speedUpTime > speedUpInterval ) {
       speedUpTime = gameTime;
@@ -776,6 +781,8 @@ function draw() {
     textAlign( CENTER );
   	textSize( minRes*0.1 );
   	text( 'GAME OVER' , xC , yC );
+  	textSize( minRes*0.05 );
+  	text( 'you survived ' + round(timeAtDeath/10)/100 + ' seconds'  , xC , yRes*0.75 );
   }
 
 
