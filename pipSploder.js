@@ -97,7 +97,7 @@ function setupGlobalVariables() {
     // game field color
     gfColor = color( 0 , 0 , 0 , gfAlpha );
     // game field line alpha
-    gfLineAlpha = 32;
+    gfLineAlpha = 48;
     // game field line color
     gfLineColor = color( 255 , 255 , 255 , gfLineAlpha );
     // game field color velocity
@@ -173,11 +173,11 @@ function setupGlobalVariables() {
     // base transparency/color
     baseAlpha = 200;
     baseColor = color( 0 , 0 , 0 , baseAlpha );
-    baseStroke = color( 80 , 80 , 80 , baseAlpha );
+    baseStroke = color( 0 , 128 , 196 , baseAlpha );
     // base radius
-    baseRadius = 1.5;
+    baseRadius = 1.75;
     // base weight
-    baseWeight = 0.03;
+    baseWeight = 0.05;
     // LIFE METER
     // maximum life
     maxLife = 20;
@@ -188,11 +188,11 @@ function setupGlobalVariables() {
     // life color
     lifeColor = color( 255 , 0 , 128 , lifeAlpha );
     // life ring radius
-    lifeRadius = 1.35;
+    lifeRadius = 1.5;
     // life ring weight
-    lifeWeight = 0.05;
+    lifeWeight = 0.1;
     // life ring ratio (of solid)
-    lifeRatio = 0.8;
+    lifeRatio = 0.7;
     // life ring angle per unit
     lifeAnglePerUnit = TWO_PI / maxLife;
     // life ring angle displayed per unit
@@ -201,7 +201,7 @@ function setupGlobalVariables() {
     // bomb meter transparency/color
     bmAlpha = 200;
     bmFullColor = color( 0 , 255 , 128 , bmAlpha );
-    bmPartColor = color( 0 , 128 , 255 , bmAlpha );
+    bmPartColor = color( 0 , 96 , 48 , bmAlpha );
     // max number of bombs
     maxBombs = 3;
     // player's number of bombs
@@ -209,33 +209,46 @@ function setupGlobalVariables() {
     // bomb build speed
     bombBuildSpeed = 0.0009;
     // bomb meter radius
-    bmRadius = 1.20;
+    bmRadius = 1.25;
     // bomb meter weight
-    bmWeight = 0.05;
+    bmWeight = 0.1;
     // bomb meter ratio
     bmRatio = 0.93;
     // bomb meter angle per unit
     bmAnglePerUnit = TWO_PI / maxBombs;
     // bomb meter angle displayed per unit
     bmAngleDisplayed = bmAnglePerUnit*bmRatio;
-    // PUSH METER
-    // push meter transparency and color
+    // POW METER
+    // pow meter transparency and color
     pmAlpha = 200;
     pmColor = color( 255 , 128 , 0 , pmAlpha );
-    // push button radius
+    // pow button radius
     pbColor = color( 255 , 255 , 64  , pmAlpha );
-    // push meter max
+    // pow meter max
     pmMax = 10;
-    // push meter value
+    // pow meter value
     pmValue = 10;
-    // push meter radius
-    pmRadius = 1.05;
-    // push  button radius
-    pbRadius = 0.90;
-    // push meter weight
-    pmWeight = 0.05;
-    // levels Pips are pushed per push
-    levelsPerPush = 2;
+    // pow meter radius
+    pmRadius = 1;
+    // pow  button radius
+    pbRadius = 0.75;
+    // pow meter weight
+    pmWeight = 0.1;
+    // levels Pips are powed per pow
+    levelsPerPow = 3;
+    // pow animation transparency
+    paAlpha = 128;
+    // min/max radius of pow animation
+    paMax = radLevel[ numLevels - levelsPerPow ] ;
+    paMin = baseRadius;
+    // pow animation on
+    paOn = false;
+    // pow animation duration
+    paDuration = 1500;
+    // pow animation start time
+    paTime = 0;
+    // pow animation weight
+    paWeight = 0.05;
     
   }
 }
@@ -591,25 +604,19 @@ var Game = function() {
   // CLASS METHODS:
   // Game method: push
   // pushes all Pips up some levels (levelsPerPush)
-  this.push = function() {
+  this.pow = function() {
     // parse through all Pips
     for( var i = 0 ; i < this.numP ; i++ ) {
-      var s = this.pips[i].dpa * radLevel[this.pips[i].level] / radLevel[0];
-      this.pips[i].level -= levelsPerPush;
-      if( this.pips[i].level < 0 ) {
+      // if the pip is in the pow levels, splode it
+      if( this.pips[i].level >= numLevels - levelsPerPow ) {
         this.pips[i].alive = false;
         append( this.splosions , new Splosion( this.pips[i].x , this.pips[i].strokeColor ) );
               this.numS++;
-      } else if( this.pips[i].level === 0 ) {
-        this.pips[i].transitioning = true;
-        this.pips[i].transStart = gameTime;
-        this.dpa = random( minDPA , maxDPA );
-      } else if( this.pips[i].level > 0 ) {
-        this.pips[i].transitioning = false;
-        this.pips[i].levelStart = gameTime;
-        this.dpa = s / ( radLevel[this.pips[i].level] / radLevel[0]);
       }
     }
+    // start pow animation
+    paOn = true;
+    paTime = gameTime;
   }
   // Game method: checkBlasts
   // checks whether blasts have killed any pips
@@ -683,6 +690,10 @@ var Game = function() {
       }
       console.log( 'timeBetweenNewPips=' + timeBetweenNewPips );
       console.log( 'time at level: ' + typMin + ' - ' + typMax );
+    }
+    // check if it's time to turn off pow
+    if( paOn && (gameTime - paTime > paDuration ) ) {
+      paOn = false;
     }
     
   };
@@ -791,6 +802,19 @@ function draw() {
     // draw the game
     G.draw();
     
+    // draw the pow animation
+    if( paOn ) {
+      var a = (gameTime - paTime)/paDuration;
+      var d1 = 2*gf2winFactor*( paMin + (paMax - paMin)*(0.5+0.5*cos(TWO_PI*a) ) );
+      var d2 = 2*gf2winFactor*( paMin + (paMax - paMin)*(0.5-0.5*cos(TWO_PI*a) ) );
+      noFill();
+      strokeWeight( paWeight*gf2winFactor );
+      stroke( hsvColor( 360*a , 1 , 1 , paAlpha*(1-a) ) );
+      ellipse( xC , yC , d1 , d1 );
+      stroke( hsvColor( 360*(1-a) , 1 , 1 , paAlpha*(1-a) ) );
+      ellipse( xC , yC , d2 , d2 );
+    }
+    
     // draw the base
     fill( baseColor );
     var d = 2*baseRadius*gf2winFactor;
@@ -862,7 +886,7 @@ function touchStarted() {
     clickTime = gameTime;
     var m = win2gfVect( createVector( mouseX , mouseY ) );
     if( (pmValue >= pmMax) && ( m.mag() <= pmRadius ) ) {
-      G.push();
+      G.pow();
       pmValue = 0;
     } else {
       if( playerBombs >= 1 ) {
