@@ -1,6 +1,6 @@
 // pipSploder
 // marthematicist - 2016
-var vers = '0.28';
+var vers = '0.32';
 console.log( 'pipSploder - version ' + vers );
 
 // GLOBAL VARIABLES /////////////////////////////////////////
@@ -53,6 +53,7 @@ function setupGlobalVariables() {
     for( var i = 0 ; i < numLevels+1 ; i++ ) {
       radLevel[i] = maxRadius - dRadius*(i-1);
     }
+    radLevel[numLevels] = 1.75;
   }
   
   // PIP VARIABLES
@@ -78,8 +79,8 @@ function setupGlobalVariables() {
     // transition time (ms)
     transTime = 1500;
     // min/max time per level (ms)
-    typMin = 4000;
-    typMax = 8000;
+    typMin = 40;
+    typMax = 80;
     minTimeAtLevel = [ 0 ];
     maxTimeAtLevel = [ 0 ];
     for( var i = 1 ; i < numLevels ; i++ ) {
@@ -110,7 +111,7 @@ function setupGlobalVariables() {
   // RECORD-KEEPING VARIABLES
   {
     frameTime = 0;
-    avgFrameTime = 100;
+    avgFrameTime = 20;
   }
   
   // TIME VARIABLES
@@ -176,7 +177,7 @@ function setupGlobalVariables() {
     // is game on? (not over)
     gameOn = true;
     // base transparency/color
-    baseAlpha = 200;
+    baseAlpha = 64;
     baseColor = color( 0 , 0 , 0 , baseAlpha );
     baseStroke = color( 0 , 128 , 196 , baseAlpha );
     // base radius
@@ -232,7 +233,7 @@ function setupGlobalVariables() {
     // pow meter max
     pmMax = 100;
     // pow meter value
-    pmValue =0;
+    pmValue = 0;
     // pow meter radius
     pmRadius = 1;
     // pow  button radius
@@ -247,7 +248,7 @@ function setupGlobalVariables() {
     paMax = radLevel[ numLevels - levelsPerPow ] ;
     paMin = baseRadius;
     // pow animation on
-    paOn = false;
+    paOn = true;
     // pow animation duration
     paDuration = 1500;
     // pow animation start time
@@ -279,6 +280,8 @@ function setupGlobalVariables() {
   // initialize game
   G = new Game();
   gameTime = 0;
+  resizeCanvas(xRes , yRes);
+  background(0);
 }
 
 // UTILITY FUNCTIONS //////////////////////////////////////////////////////
@@ -630,6 +633,12 @@ var Game = function() {
   this.numS = 0;
   // array of Splosions
   this.splosions = [];
+  for( var i = 0 ; i < 10 ; i++ ) {
+    var c = hsvColor( random(0,360) , 0.5 , 1 , pipAlpha );
+    var x = createVector( 0 , 0 );
+    this.splosions[i] = new Splosion( x , c );
+    this.numS++;
+  }
   // number of Bombs
   this.numB = 0;
   // array of Bombs
@@ -714,6 +723,14 @@ var Game = function() {
     if( playerLife <= -1 ) {
       gameOn = false;
       timeAtDeath = gameTime;
+      this.splosions = [];
+      for( var i = 0 ; i < 10 ; i++ ) {
+        var c = hsvColor( random(0,360) , 0.5 , 1 , pipAlpha );
+        var x = createVector( 0 , 0 );
+        this.splosions[i] = new Splosion( x , c );
+        this.numS++;
+      }
+      background(0);
     }
     // check if it's time to speed up
     if( gameTime - speedUpTime > speedUpInterval ) {
@@ -816,9 +833,9 @@ var Game = function() {
 
 // SETUP FUNCTION //////////////////////////////////////////////////////////////
 function setup() {
-  setupGlobalVariables();
-  createCanvas( xRes , yRes );
   
+  createCanvas( windowWidth , windowHeight );
+  setupGlobalVariables();
   
   textStyle( BOLD );
   // draw background
@@ -882,8 +899,8 @@ function draw() {
       ellipse( xC , yC , d , d );
       textAlign( CENTER , CENTER );
       fill( lifeColor );
-      textSize( 0.3*gf2winFactor );
-      text( 'BOMBE!' , xC , yC );
+      textSize( 0.35*gf2winFactor );
+      text( 'BOMBE' , xC , yC );
     }
     
     // draw life meter
@@ -923,12 +940,24 @@ function draw() {
     text( scoreText , 0 , 0 );
     
   } else {
-    background( 0 );
+    background( 0 , 0 , 0 , 64 );
+    // evolve all Splosions
+    for( var i = 0 ; i < G.numS ; i++ ) {
+      G.splosions[i].evolve( dt );
+    }
+    // draw all Splosions
+    for( var i = 0 ; i < G.numS ; i++ ) {
+      G.splosions[i].draw();
+    }
+    
+    
     noStroke();
     fill(255);
-    textAlign( CENTER );
+    textAlign( CENTER , CENTER );
   	textSize( minRes*0.08 );
   	var scoreText = numberWithCommas( gameScore );
+  	var cv = (gameTime*0.05)%360;
+  	fill( hsvColor( cv , 0.5 , 1 , 196 ) );
   	text( 'GAME OVER\nSCORE: ' + scoreText , xC , yRes*0.25 );
   	textSize( minRes*0.05 );
   	text( 'you survived ' + round(timeAtDeath/10)/100 + ' seconds'  , xC , yRes*0.75 );
