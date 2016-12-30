@@ -164,15 +164,15 @@ function setupGlobalVariables() {
     // player life
     playerLife = 20;
     // life alpha
-    lifeAlpha = 128;
+    lifeAlpha = 200;
     // life color
-    lifeColor = color( 255 , 64 , 64 , lifeAlpha );
+    lifeColor = color( 255 , 0 , 128 , lifeAlpha );
     // life ring radius
     lifeRadius = 1.35;
     // life ring weight
     lifeWeight = 0.05;
     // life ring ratio (of solid)
-    lifeRatio = 0.5;
+    lifeRatio = 0.8;
     // life ring angle per unit
     lifeAnglePerUnit = TWO_PI / maxLife;
     // life ring angle displayed per unit
@@ -193,7 +193,7 @@ function setupGlobalVariables() {
     // bomb meter weight
     bmWeight = 0.05;
     // bomb meter ratio
-    bmRatio = 0.85;
+    bmRatio = 0.93;
     // bomb meter angle per unit
     bmAnglePerUnit = TWO_PI / maxBombs;
     // bomb meter angle displayed per unit
@@ -483,7 +483,7 @@ var Bomb = function( xd ) {
     }
     if( this.mode === 'blast' ) {
       noFill();
-      stroke( hsvColor( random(90,270) , 0.5 , 1 , bombBlastAlpha - 0.85*bombBlastAlpha*this.br/maxBlast ) );
+      stroke( hsvColor( random(45,315) , 0.5 , 1 , bombBlastAlpha - 0.85*bombBlastAlpha*this.br/maxBlast ) );
       strokeWeight( bombWeight*gf2winFactor );
       var v = gf2winVect( this.xd );
       var d = this.br*2*gf2winFactor;
