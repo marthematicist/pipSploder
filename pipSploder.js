@@ -254,7 +254,24 @@ function setupGlobalVariables() {
     paTime = 0;
     // pow animation weight
     paWeight = 0.05;
-    
+  }
+  // SCORING VARIABLES:
+  {
+    // game score:
+    gameScore = 0;
+    // points per Pip
+    pointsPerPip = 100;
+    // bonus multiplier for multi-kill bombs
+    bonusMultPerPip = 0.25;
+    // score text size
+    scoreTextSize = 0.60;
+    // score transparency
+    scoreAlpha = 255;
+    // score color
+    scoreColor = color( 255 , 255 , 255 , scoreAlpha );
+    // constants
+    LOG10 = log(10);
+    LOG1000 = log(1000);
   }
 }
 
@@ -295,6 +312,10 @@ function hsvColor( h , s , v , a ) {
     rp = c;  gp = 0 , bp = x;
   }
   return color( (rp+m)*255 , (gp+m)*255 , (bp+m)*255 , a );
+}
+// function to format a number with commas
+function numberWithCommas(x) {
+    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
 
 // CLASS: Pip /////////////////////////////////////////////////////////////
@@ -518,6 +539,8 @@ var Bomb = function( xd ) {
   this.alive = true;
   // time at start of dying
   this.dyingTime = 0;
+  // number of Pips killed
+  this.pipsKilled = 0;
   
   
   // CLASS METHODS:
@@ -607,8 +630,8 @@ var Game = function() {
   this.bombs = [];
   
   // CLASS METHODS:
-  // Game method: push
-  // pushes all Pips up some levels (levelsPerPush)
+  // Game method: pow
+  // splodes all Pips a number of levels (levelsPerPow) from center
   this.pow = function() {
     // parse through all Pips
     for( var i = 0 ; i < this.numP ; i++ ) {
@@ -617,6 +640,7 @@ var Game = function() {
         this.pips[i].alive = false;
         append( this.splosions , new Splosion( this.pips[i].x , this.pips[i].strokeColor ) );
               this.numS++;
+        gameScore += pointsPerPip;
       }
     }
     // start pow animation
@@ -644,6 +668,8 @@ var Game = function() {
               this.numS++;
               pmValue++;
               if( pmValue > pmMax ) { pmValue = pmMax; }
+              this.bombs[b].pipsKilled++;
+              gameScore += pointsPerPip;
             }
           }
         }
@@ -765,6 +791,11 @@ var Game = function() {
     ind = [];
     for( var i = 0 ; i < this.numB ; i++ ) {
       if( !this.bombs[i].alive ) {
+        var n = this.bombs[i].pipsKilled;
+        if( n > 1 ) {
+          var m = (n-1)*bonusMultPerPip;
+          gameScore += n*pointsPerPip*m;
+        }
         append( ind , i );
       }
     }
@@ -871,13 +902,26 @@ function draw() {
       }
       
     }
+    // draw score
+    var cv = (gameTime*0.05)%360;
+    var scoreText = numberWithCommas( gameScore );
+    fill( color( red(gfColor) , green(gfColor) , blue(gfColor) , 196 ) );
+    noStroke();
+    var scoreWidth = ( floor(log(gameScore+1)/LOG10+1)*.55 + floor(log(gameScore+1)/LOG1000)*0.32 )*scoreTextSize*gf2winFactor;
+    rect( 0 , 0 , scoreWidth , scoreTextSize*gf2winFactor );
+    textAlign( LEFT , TOP );
+    textSize( scoreTextSize*gf2winFactor );
+    fill( hsvColor( cv , 0.5 , 1 , 196 ) );
+    text( scoreText , 0 , 0 );
+    
   } else {
     background( 0 );
     noStroke();
     fill(255);
     textAlign( CENTER );
   	textSize( minRes*0.1 );
-  	text( 'GAME OVER' , xC , yC );
+  	var scoreText = numberWithCommas( gameScore );
+  	text( 'GAME OVER\nSCORE: ' + scoreText , xC , yRes*0.25 );
   	textSize( minRes*0.05 );
   	text( 'you survived ' + round(timeAtDeath/10)/100 + ' seconds'  , xC , yRes*0.75 );
   }
