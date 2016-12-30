@@ -119,7 +119,7 @@ function setupGlobalVariables() {
     // time between adding new pips
     timeBetweenNewPips = 500;
     // min time between clicks
-    minTimeBetweenClicks = 350;
+    minTimeBetweenClicks = 200;
     // time of last click
     clickTime = 0;
   }
