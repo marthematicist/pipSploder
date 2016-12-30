@@ -1,6 +1,6 @@
 // pipSploder
 // marthematicist - 2016
-var vers = '0.35';
+var vers = '0.36';
 console.log( 'pipSploder - version ' + vers );
 
 // GLOBAL VARIABLES /////////////////////////////////////////
@@ -973,7 +973,7 @@ function draw() {
 
   // log out data periodically
   if( frameCount % 500 === 0 ) {
-    console.log( 'avgFrameTime=' + avgFrameTime + ' numP=' + G.numP );
+    //console.log( 'avgFrameTime=' + avgFrameTime + ' numP=' + G.numP );
   }
 }
 
