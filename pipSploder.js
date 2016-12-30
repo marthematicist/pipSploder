@@ -10,6 +10,8 @@ function setupGlobalVariables() {
     // window resolution (pixels)
     xRes = windowWidth;
     yRes = windowHeight;
+    xC = 0.5*xRes;
+    yC = 0.5*yRes;
     minRes = min( xRes , yRes );
     maxRes = max( xRes , yRes );
     maxDist = sqrt( minRes*minRes + maxRes*maxRes );
@@ -123,17 +125,11 @@ function setupGlobalVariables() {
     G = 0;
   }
   
-  // BASE VARIABLES
-  {
-    // base radius
-    baseRadius = 1;
-  }
-  
   // BOMB VARIABLES
   {
     // bomb tansparency
     bombTravelAlpha = 255;
-    bombBlastAlpha = 100;
+    bombBlastAlpha = 255;
     // bomb stroke weight
     bombWeight = 0.2;
     // bomb travel diameter
@@ -143,7 +139,7 @@ function setupGlobalVariables() {
     // blast velocity
     blastVel = 0.0022;
     // maximum blast radius
-    maxBlast = 1;
+    maxBlast = 1.2;
     // linger time
     bombLinger = 200;
   }
@@ -153,6 +149,58 @@ function setupGlobalVariables() {
     splosionLife = 3000;
     splosionParticles = 20;
     splosionDiam = 0.05;
+  }
+  
+  // BASE VARIABLES
+  {
+    // base transparency/color
+    baseAlpha = 200;
+    baseColor = color( 0 , 0 , 0 , baseAlpha );
+    // base radius
+    baseRadius = 1.5;
+    // LIFE METER
+    // maximum life
+    maxLife = 20;
+    // player life
+    playerLife = 20;
+    // life alpha
+    lifeAlpha = 128;
+    // life color
+    lifeColor = color( 255 , 64 , 64 , lifeAlpha );
+    // life ring radius
+    lifeRadius = 1.35;
+    // life ring weight
+    lifeWeight = 0.05;
+    // life ring ratio (of solid)
+    lifeRatio = 0.5;
+    // life ring angle per unit
+    lifeAnglePerUnit = TWO_PI / maxLife;
+    // life ring angle displayed per unit
+    lifeAngleDisplayed = lifeAnglePerUnit*lifeRatio;
+    // BOMB METER
+    // bomb meter transparency/color
+    bmAlpha = 200;
+    bmFullColor = color( 0 , 255 , 128 , bmAlpha );
+    bmPartColor = color( 0 , 128 , 255 , bmAlpha );
+    // max number of bombs
+    maxBombs = 3;
+    // player's number of bombs
+    playerBombs = maxBombs;
+    // bomb build speed
+    bombBuildSpeed = 0.0007;
+    // bomb meter radius
+    bmRadius = 1.20;
+    // bomb meter weight
+    bmWeight = 0.05;
+    // bomb meter ratio
+    bmRatio = 0.85;
+    // bomb meter angle per unit
+    bmAnglePerUnit = TWO_PI / maxBombs;
+    // bomb meter angle displayed per unit
+    bmAngleDisplayed = bmAnglePerUnit*bmRatio;
+    
+    
+    
   }
   
 }
@@ -238,32 +286,14 @@ var Pip = function( ) {
   this.transStart = 0;
   // is Pip alive?
   this.alive = true;
+  // did Pip reach the center?
+  this.reachedCenter = false;
   
   // CLASS METHODS: Pip
   // Pip method: draw
   // draws the Pip to the canvas
   this.draw = function() {
     if( this.alive ) {
-      /*
-      var v0 = gf2winVect( p5.Vector.add( this.x , p5.Vector.mult( this.fd , this.s ) ) );
-      var v1 = gf2winVect( p5.Vector.add( this.x , p5.Vector.mult( this.ld , this.s ) ) );
-      var v2;
-      if( this.transitioning ) {
-        v2 = gf2winVect( p5.Vector.add( this.x , p5.Vector.mult( this.fd , -1.5*this.s ) ) );
-      } else {
-        v2 = gf2winVect( p5.Vector.add( this.x , p5.Vector.mult( this.fd , -2*this.s ) ) );
-      }
-      var v3 = gf2winVect( p5.Vector.add( this.x , p5.Vector.mult( this.ld , -this.s ) ) );
-      strokeWeight(pipLineWeight*gf2winFactor);
-      stroke( this.strokeColor );
-      fill( this.fillColor );
-      beginShape();
-      vertex( v0.x , v0.y );
-      vertex( v1.x , v1.y );
-      vertex( v2.x , v2.y );
-      vertex( v3.x , v3.y );
-      endShape( CLOSE );
-      */
       strokeWeight(pipLineWeight*gf2winFactor);
       stroke( this.strokeColor );
       fill( this.fillColor );
@@ -288,6 +318,7 @@ var Pip = function( ) {
         this.level++;
         if( this.level > numLevels-1 ) {
           this.alive = false;
+          this.reachedCenter = true;
         } else {
           this.transitioning = false;
           this.levelStart = gameTime;
@@ -452,7 +483,7 @@ var Bomb = function( xd ) {
     }
     if( this.mode === 'blast' ) {
       noFill();
-      stroke( hsvColor( random(0,360) , 0.5 , 1 , bombBlastAlpha ) );
+      stroke( hsvColor( random(90,270) , 0.5 , 1 , bombBlastAlpha - 0.85*bombBlastAlpha*this.br/maxBlast ) );
       strokeWeight( bombWeight*gf2winFactor );
       var v = gf2winVect( this.xd );
       var d = this.br*2*gf2winFactor;
@@ -571,6 +602,9 @@ var Game = function() {
     for( var i = 0 ; i < this.numS ; i++ ) {
       this.splosions[i].evolve( dt );
     }
+    // evolve bombs
+    playerBombs += dt * bombBuildSpeed;
+    if( playerBombs > maxBombs ) { playerBombs = maxBombs; }
     // remove dead objects
     this.removeDeadObj();
   };
@@ -584,7 +618,7 @@ var Game = function() {
       stroke( hsvColor( (a + 360*i/numLevels)%360 , 0.25 , 1 , gfLineAlpha ) );
       noFill();
       var d = ( radLevel[i] - 0.25 )*2*gf2winFactor;
-      ellipse( 0.5*xRes , 0.5*yRes , d , d );
+      ellipse( xC , 0.5*yRes , d , d );
     }
     // draw all Bombs
     for( var i = 0 ; i < this.numB ; i++ ) {
@@ -609,6 +643,7 @@ var Game = function() {
     for( var i = 0 ; i < this.numP ; i++ ) {
       if( !this.pips[i].alive ) {
         append( ind , i );
+        if( this.pips[i].reachedCenter ) { playerLife--; }
       }
     }
     reverse( ind );
@@ -667,21 +702,8 @@ function draw() {
   // roll forward gameTime
   gameTime += avgFrameTime;
   
-
-  
-  
   // draw background
   background( gfColor );
-  
-  // draw game field
-  /*
-  fill( gfColor );
-  noStroke();
-  var d = 2*(radLevel[0]+0.2)*gf2winFactor;
-  ellipse( 0.5*xRes , 0.5*yRes , d , d );
-  */
-  //rect( ulx , uly , winExt , winExt );
-  
   
   // evolve the game
   G.evolve( avgFrameTime );
@@ -689,25 +711,50 @@ function draw() {
   // draw the game
   G.draw();
   
-  // draw background
-  /*
-  var r = 0.5*(minRes + maxDist )+0.5*gf2winFactor;
-  var t = 0.5*(maxDist - minRes );
-  strokeWeight(t);
-  stroke(64);
+  // draw the base
+  fill( baseColor );
+  var d = 2*baseRadius*gf2winFactor;
+  noStroke();
+  ellipse( xC , yC , d , d );
+  // draw life ring
+  d = lifeRadius * gf2winFactor * 2;
   noFill();
-  ellipse( 0.5*xRes , 0.5*yRes , r , r );
-  */
-  
+  stroke( lifeColor );
+  strokeWeight( lifeWeight*gf2winFactor );
+  for( var i = 0 ; i < playerLife ; i++ ) {
+    arc( xC , yC , d , d , i*lifeAnglePerUnit - 0.5* lifeAngleDisplayed ,
+         i*lifeAnglePerUnit + 0.5* lifeAngleDisplayed );
+  }
+  // draw bomb meter
+  d = bmRadius * gf2winFactor * 2;
+  stroke( bmFullColor );
+  strokeWeight( bmWeight*gf2winFactor );
+  for( var i = 0 ; i < playerBombs ; i++ ) {
+    if( i+1 > playerBombs ) {
+      stroke( bmPartColor );
+      arc( xC , yC , d , d , i*bmAnglePerUnit - 0.5*bmAngleDisplayed ,
+          i*bmAnglePerUnit - 0.5*bmAngleDisplayed + (playerBombs%1)*bmAngleDisplayed );
+    }else {
+      arc( xC , yC , d , d , i*bmAnglePerUnit - 0.5*bmAngleDisplayed ,
+           i*bmAnglePerUnit + 0.5*bmAngleDisplayed );
+    }
+    
+  }
+
+
+  // log out data periodically
   if( frameCount % 100 === 0 ) {
     console.log( 'avgFrameTime=' + avgFrameTime + ' numP=' + G.numP );
   }
 }
 
 function touchStarted() {
-  var m = win2gfVect( createVector( mouseX , mouseY ) );
-  append( G.bombs , new Bomb( m ) );
-  G.numB++;
+  if( playerBombs >= 1 ) {
+    var m = win2gfVect( createVector( mouseX , mouseY ) );
+    append( G.bombs , new Bomb( m ) );
+    G.numB++;
+    playerBombs--;
+  }
 }
 /*
 function touchStarted() {
