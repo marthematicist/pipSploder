@@ -118,6 +118,10 @@ function setupGlobalVariables() {
     newPipTime = 0;
     // time between adding new pips
     timeBetweenNewPips = 500;
+    // min time between clicks
+    minTimeBetweenClicks = 350;
+    // time of last click
+    clickTime = 0;
   }
   
   // GLOBAL OBJECTS
@@ -749,11 +753,14 @@ function draw() {
 }
 
 function touchStarted() {
-  if( playerBombs >= 1 ) {
-    var m = win2gfVect( createVector( mouseX , mouseY ) );
-    append( G.bombs , new Bomb( m ) );
-    G.numB++;
-    playerBombs--;
+  if( gameTime - clickTime > minTimeBetweenClicks ) {
+    clickTime = gameTime;
+    if( playerBombs >= 1 ) {
+      var m = win2gfVect( createVector( mouseX , mouseY ) );
+      append( G.bombs , new Bomb( m ) );
+      G.numB++;
+      playerBombs--;
+    }
   }
 }
 /*
