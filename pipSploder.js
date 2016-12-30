@@ -232,7 +232,7 @@ function setupGlobalVariables() {
     // pow meter max
     pmMax = 100;
     // pow meter value
-    pmValue = 0;
+    pmValue = 100;
     // pow meter radius
     pmRadius = 1;
     // pow  button radius
@@ -240,7 +240,7 @@ function setupGlobalVariables() {
     // pow meter weight
     pmWeight = 0.1;
     // levels Pips are powed per pow
-    levelsPerPow = 3;
+    levelsPerPow = 5;
     // pow animation transparency
     paAlpha = 128;
     // min/max radius of pow animation
