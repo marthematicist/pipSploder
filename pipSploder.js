@@ -1,6 +1,6 @@
 // pipSploder
 // marthematicist - 2016
-var vers = '0.32';
+var vers = '0.33';
 console.log( 'pipSploder - version ' + vers );
 
 // GLOBAL VARIABLES /////////////////////////////////////////
@@ -79,8 +79,8 @@ function setupGlobalVariables() {
     // transition time (ms)
     transTime = 1500;
     // min/max time per level (ms)
-    typMin = 40;
-    typMax = 80;
+    typMin = 4000;
+    typMax = 8000;
     minTimeAtLevel = [ 0 ];
     maxTimeAtLevel = [ 0 ];
     for( var i = 1 ; i < numLevels ; i++ ) {
