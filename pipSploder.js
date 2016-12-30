@@ -1,6 +1,6 @@
 // pipSploder
 // marthematicist - 2016
-var vers = '0.33';
+var vers = '0.35';
 console.log( 'pipSploder - version ' + vers );
 
 // GLOBAL VARIABLES /////////////////////////////////////////
@@ -280,7 +280,6 @@ function setupGlobalVariables() {
   // initialize game
   G = new Game();
   gameTime = 0;
-  resizeCanvas(xRes , yRes);
   background(0);
 }
 
@@ -833,9 +832,8 @@ var Game = function() {
 
 // SETUP FUNCTION //////////////////////////////////////////////////////////////
 function setup() {
-  
-  createCanvas( windowWidth , windowHeight );
   setupGlobalVariables();
+  createCanvas( xRes , yRes );
   
   textStyle( BOLD );
   // draw background
