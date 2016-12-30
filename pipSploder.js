@@ -157,9 +157,11 @@ function setupGlobalVariables() {
   
   // BASE VARIABLES
   {
+    // is game on? (not over)
+    gameOn = true;
     // base transparency/color
     baseAlpha = 200;
-    baseColor = color( 0 , 0 , 0 , baseAlpha );
+    baseColor = color( 30 , 30 , 30 , baseAlpha );
     // base radius
     baseRadius = 1.5;
     // LIFE METER
@@ -202,11 +204,7 @@ function setupGlobalVariables() {
     bmAnglePerUnit = TWO_PI / maxBombs;
     // bomb meter angle displayed per unit
     bmAngleDisplayed = bmAnglePerUnit*bmRatio;
-    
-    
-    
   }
-  
 }
 
 // UTILITY FUNCTIONS //////////////////////////////////////////////////////
@@ -611,6 +609,9 @@ var Game = function() {
     if( playerBombs > maxBombs ) { playerBombs = maxBombs; }
     // remove dead objects
     this.removeDeadObj();
+    // check if game is over
+    if( playerLife <= -1 ) { gameOn = false; }
+    
   };
   // Game method: draw
   // draws game field and all Pips, Splosions
@@ -637,6 +638,7 @@ var Game = function() {
     for( var i = 0 ; i < this.numS ; i++ ) {
       this.splosions[i].draw();
     }
+    
     
   };
   // Game method: removeDeadObj
@@ -693,7 +695,7 @@ function setup() {
   gameTime = 0;
   
   // draw background
-  background( bgColor );
+  background( 30 , 30 , 30 , 255 );
 }
 
 function draw() {
@@ -706,43 +708,52 @@ function draw() {
   // roll forward gameTime
   gameTime += avgFrameTime;
   
-  // draw background
-  background( gfColor );
-  
-  // evolve the game
-  G.evolve( avgFrameTime );
-  
-  // draw the game
-  G.draw();
-  
-  // draw the base
-  fill( baseColor );
-  var d = 2*baseRadius*gf2winFactor;
-  noStroke();
-  ellipse( xC , yC , d , d );
-  // draw life ring
-  d = lifeRadius * gf2winFactor * 2;
-  noFill();
-  stroke( lifeColor );
-  strokeWeight( lifeWeight*gf2winFactor );
-  for( var i = 0 ; i < playerLife ; i++ ) {
-    arc( xC , yC , d , d , i*lifeAnglePerUnit - 0.5* lifeAngleDisplayed ,
-         i*lifeAnglePerUnit + 0.5* lifeAngleDisplayed );
-  }
-  // draw bomb meter
-  d = bmRadius * gf2winFactor * 2;
-  stroke( bmFullColor );
-  strokeWeight( bmWeight*gf2winFactor );
-  for( var i = 0 ; i < playerBombs ; i++ ) {
-    if( i+1 > playerBombs ) {
-      stroke( bmPartColor );
-      arc( xC , yC , d , d , i*bmAnglePerUnit - 0.5*bmAngleDisplayed ,
-          i*bmAnglePerUnit - 0.5*bmAngleDisplayed + (playerBombs%1)*bmAngleDisplayed );
-    }else {
-      arc( xC , yC , d , d , i*bmAnglePerUnit - 0.5*bmAngleDisplayed ,
-           i*bmAnglePerUnit + 0.5*bmAngleDisplayed );
-    }
+  if( gameOn ) {
+    // draw background
+    background( gfColor );
     
+    // evolve the game
+    G.evolve( avgFrameTime );
+    
+    // draw the game
+    G.draw();
+    
+    // draw the base
+    fill( baseColor );
+    var d = 2*baseRadius*gf2winFactor;
+    noStroke();
+    ellipse( xC , yC , d , d );
+    // draw life ring
+    d = lifeRadius * gf2winFactor * 2;
+    noFill();
+    stroke( lifeColor );
+    strokeWeight( lifeWeight*gf2winFactor );
+    for( var i = 0 ; i < playerLife ; i++ ) {
+      arc( xC , yC , d , d , i*lifeAnglePerUnit - 0.5* lifeAngleDisplayed ,
+           i*lifeAnglePerUnit + 0.5* lifeAngleDisplayed );
+    }
+    // draw bomb meter
+    d = bmRadius * gf2winFactor * 2;
+    stroke( bmFullColor );
+    strokeWeight( bmWeight*gf2winFactor );
+    for( var i = 0 ; i < playerBombs ; i++ ) {
+      if( i+1 > playerBombs ) {
+        stroke( bmPartColor );
+        arc( xC , yC , d , d , i*bmAnglePerUnit - 0.5*bmAngleDisplayed ,
+            i*bmAnglePerUnit - 0.5*bmAngleDisplayed + (playerBombs%1)*bmAngleDisplayed );
+      }else {
+        arc( xC , yC , d , d , i*bmAnglePerUnit - 0.5*bmAngleDisplayed ,
+             i*bmAnglePerUnit + 0.5*bmAngleDisplayed );
+      }
+      
+    }
+  } else {
+    background( 0 );
+    noStroke();
+    fill(255);
+    textAlign( CENTER );
+  	textSize( minRes*0.1 );
+  	text( 'GAME OVER' , xC , yC );
   }
 
 
