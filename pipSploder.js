@@ -1,6 +1,6 @@
 // pipSploder
 // marthematicist - 2016
-var vers = '0.38';
+var vers = '0.40';
 console.log( 'pipSploder - version ' + vers );
 
 // GLOBAL VARIABLES /////////////////////////////////////////
@@ -944,10 +944,29 @@ function draw() {
     for( var i = 0 ; i < G.numS ; i++ ) {
       G.splosions[i].evolve( dt );
     }
+    // remove dead Splosions
+    ind = [];
+    for( var i = 0 ; i < G.numS ; i++ ) {
+      if( !G.splosions[i].alive ) {
+        append( ind , i );
+      }
+    }
+    reverse( ind );
+    for( var i = 0 ; i < ind.length ; i++ ) {
+      G.splosions.splice( ind[i] , 1 );
+    }
+    G.numS -= ind.length;
     // draw all Splosions
     for( var i = 0 ; i < G.numS ; i++ ) {
       G.splosions[i].draw();
     }
+    // add new Splosions
+    for( var i = 0 ; i < 10 - G.numS ; i++ ) {
+      var c = hsvColor( random(0,360) , 0.5 , 1 , pipAlpha );
+      var x = createVector( 0 , 0 );
+      G.splosions[i] = new Splosion( x , c );
+    }
+    G.numS = G.splosions.length;
     
     
     noStroke();
