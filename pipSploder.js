@@ -1,6 +1,6 @@
 // pipSploder
 // marthematicist - 2016
-var vers = '0.45';
+var vers = '0.46';
 console.log( 'pipSploder - version ' + vers );
 
 // GLOBAL VARIABLES /////////////////////////////////////////
@@ -746,11 +746,9 @@ var Game = function() {
     if( gameTime - speedUpTime > speedUpInterval ) {
       speedUpTime = gameTime;
       timeBetweenNewPips *= timeBetweenNewPipsFactor;
-      typMin *= timeAtLevelFactor;
-      typMax *= timeAtLevelFactor;
-      for( var i = 1 ; i < numLevels ; i++ ) {
-        minTimeAtLevel[i] = typMin;
-        maxTimeAtLevel[i] = typMax;
+      for( var i = 0 ; i < numLevels ; i++ ) {
+        minTimeAtLevel[i] *= timeAtLevelFactor;
+        maxTimeAtLevel[i] *= timeAtLevelFactor;
       }
       transTime *= transTimeFactor
       typDPA *= pipSpeedChangeFactor;
