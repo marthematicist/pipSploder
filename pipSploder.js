@@ -940,7 +940,10 @@ function draw() {
     
   } else {
     background( 0 , 0 , 0 , 64 );
-    // evolve all Splosions
+	  
+	  /*
+   
+	  // evolve all Splosions
     for( var i = 0 ; i < G.numS ; i++ ) {
       G.splosions[i].evolve( dt );
     }
@@ -968,7 +971,7 @@ function draw() {
     }
     G.numS = G.splosions.length;
     
-    
+    */
     noStroke();
     fill(255);
     textAlign( CENTER , CENTER );
