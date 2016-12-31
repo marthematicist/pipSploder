@@ -1157,7 +1157,7 @@ function draw() {
   // reset avgFrameTime
   var dt = millis()  - frameTime;
   if( dt < avgFrameTime*10 ) {
-    avgFrameTime = 0.6*avgFrameTime + 0.4*(dt);
+    avgFrameTime = 0.9*avgFrameTime + 0.1*(dt);
   }
   frameTime = millis();
   // roll forward gameTime
