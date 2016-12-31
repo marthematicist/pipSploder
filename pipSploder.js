@@ -1,7 +1,8 @@
 // pipSploder
 // marthematicist - 2016
-var vers = '1.01';
+var vers = '1.04';
 console.log( 'pipSploder - version ' + vers );
+
 
 // GLOBAL VARIABLES /////////////////////////////////////////
 function setupGlobalVariables() {
@@ -73,7 +74,7 @@ function setupGlobalVariables() {
     // background transparency
     bgAlpha = 255;
     // background color
-    bgColor = color( 64 , 64 , 64 , bgAlpha );
+    bgColor = color( 30 , 30 , 30 , bgAlpha );
     // game field transparency
     gfAlpha = 5;
     // game field color
@@ -218,7 +219,10 @@ function setupGlobalVariables() {
     lifeAnglePerUnit = TWO_PI / maxLife;
     // life meter angle displayed per unit
     lifeAngleDisplayed = lifeAnglePerUnit*lifeRatio;
-    // BASE: BOMB METER/////////////////////////////////
+  }
+  
+  // BOMB METER VARIABLES
+  {
     // bomb meter transparency/color
     bmAlpha = 200;
     bmFullColor = color( 0 , 255 , 128 , bmAlpha );
@@ -239,7 +243,10 @@ function setupGlobalVariables() {
     bmAnglePerUnit = TWO_PI / maxBombs;
     // bomb meter angle displayed per unit
     bmAngleDisplayed = bmAnglePerUnit*bmRatio;
-    // BASE: POW METER /////////////////////////////////
+  }
+  
+  // POW METER VARIABLES
+  {
     // pow meter transparency and color
     pmAlpha = 200;
     pmColor = color( 255 , 128 , 0 , pmAlpha );
@@ -274,7 +281,7 @@ function setupGlobalVariables() {
     powTriggered = false;
   }
   
-  // SCORING VARIABLES:
+  // SCORE VARIABLES:
   {
     // game score:
     gameScore = 0;
@@ -290,6 +297,13 @@ function setupGlobalVariables() {
     scoreColor = color( 255 , 255 , 255 , scoreAlpha );
     scorebgAlpha = 128;
     scorebgColor = color( 30 , 30 , 30 , scorebgAlpha);
+    // height of score display
+    textAlign( LEFT , TOP );
+    scoreHeight = font1.textBounds( '120:0,08' , 0 , 0 , scoreTextSize*gf2winFactor ).h*1.3 ;
+    // score x, y values
+    scoreX1 = xC - 0.5*radLevel[0]*gf2winFactor;
+    scoreX2 = xC + 0.5*radLevel[0]*gf2winFactor;
+    scoreY = uly;
   }
   
   // CONSTANTS
@@ -345,6 +359,15 @@ function hsvColor( h , s , v , a ) {
 // function to format a number with commas
 function numberWithCommas(x) {
     return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+// function that returns a text string formatted as a number with input in ms
+function millisToTimeString(x) {
+  var s = ( round( x % 60000 /1000) ).toString();
+  if( s.length < 2 ) { s = '0' + s; }
+  var m = ( ( x - (x%60000)) / 60000 ).toString();
+  var d = ( round( x % 1000 / 10 ) ).toString();
+  if( d.length < 2 ) { d = '0' + d; }
+  return ( '' + m + ':' + s + ':' + d );
 }
 
 // CLASS: Pip /////////////////////////////////////////////////////////////
@@ -545,6 +568,8 @@ var Bomb = function( xd ) {
   this.dyingTime = 0;
   // number of Pips killed
   this.pipsKilled = 0;
+  // number of loops to do
+  this.numLoops = round( 0.65* ( this.xdd - baseRadius ) / dRadius ) ;
   
   
   // CLASS METHODS:
@@ -553,7 +578,7 @@ var Bomb = function( xd ) {
   this.draw = function() {
     if( this.mode === 'trav') {
       noStroke();
-      var v1 =  p5.Vector.mult( this.xnorm , 0.1*sin(4*PI*(this.xpd-baseRadius)/(this.xdd-baseRadius) ) ) ;
+      var v1 =  p5.Vector.mult( this.xnorm , 0.1*sin(this.numLoops*PI*(this.xpd-baseRadius)/(this.xdd-baseRadius) ) ) ;
       var v3 = gf2winVect( p5.Vector.add( this.xp , v1 ) );
       var v4 = gf2winVect( p5.Vector.sub( this.xp , v1 ) );
       fill(  hsvColor( random(0,360) , 0.5 , 1 , bombTravelAlpha ) );
@@ -634,7 +659,6 @@ var Game = function() {
   this.numS = 0;
   // array of Splosions
   this.splosions = [];
-  
   // some splosions for the start of game
   for( var i = 0 ; i < 10 ; i++ ) {
     var c = hsvColor( random(0,360) , 0.5 , 1 , pipAlpha );
@@ -744,6 +768,8 @@ var Game = function() {
       }
       // check if it's time to transition to game mode 'gameOn'
       if( this.triggerNextMode ) {
+        // reset gameTime
+        gameTime = 0;
         // set up for 'gameOn'
         this.mode = 'gameOn';
         this.modeTime = gameTime;
@@ -765,7 +791,7 @@ var Game = function() {
         }
         // trigger a pow to celebrate
         powTriggered = true;
-        background(0);
+        background( bgColor );
       }
     }
     // EVOLVE: GAMEON ////////////////////////////////////
@@ -913,7 +939,8 @@ var Game = function() {
         ellipse( xC , yC , d , d );
         textAlign( CENTER , CENTER );
         fill( lifeColor );
-        textSize( 0.35*gf2winFactor );
+        textFont( font1 );
+        textSize( 0.5*gf2winFactor );
         text( 'BOMBE' , xC , yC );
       }
       // draw life meter
@@ -943,15 +970,28 @@ var Game = function() {
       // draw score
       var cv = (gameTime*0.05)%360;
       var scoreText = numberWithCommas( gameScore );
+      textFont( font1 );
+      textAlign( RIGHT , TOP );
+      textSize( scoreTextSize*gf2winFactor );
+      var bbox = font1.textBounds(scoreText, 0.05*xRes , 0 , scoreTextSize*gf2winFactor );
       fill( scorebgColor );
       noStroke();
-      var scoreWidth = ( floor(log(gameScore+1)/LOG10+1)*.55 + floor(log(gameScore+1)/LOG1000)*0.32 )*scoreTextSize*gf2winFactor;
-      rect( 0 , 0 , scoreWidth , scoreTextSize*gf2winFactor );
+      rect( 0 , scoreY , scoreX1 , scoreHeight );
+      fill( hsvColor( cv , 0.5 , 1 , 255 ) );
+      text( scoreText , scoreX1 , scoreY );
+      
+      // draw time
+      var cv = (gameTime*0.05)%360;
+      var timeText = millisToTimeString( gameTime );
       textAlign( LEFT , TOP );
       textSize( scoreTextSize*gf2winFactor );
-      fill( hsvColor( cv , 0.5 , 1 , 196 ) );
-      text( scoreText , 0 , 0 );
-    } // DRAW: POST ////////////////////////////////////////////////////////////////////
+      fill( scorebgColor );
+      var x2 = xC + 0.5*radLevel[0]*gf2winFactor;
+      rect( scoreX2 , scoreY , xRes - scoreX2 , scoreHeight );
+      fill( hsvColor( cv , 0.5 , 1 , 255 ) );
+      text( timeText , scoreX2 , scoreY );
+    }
+    // DRAW: POST ////////////////////////////////////////////////////////////////////
     if( this.mode === 'post' ) {
       // game over screen
       background( 0 , 0 , 0 , 64 );
@@ -971,24 +1011,31 @@ var Game = function() {
       for( var i = 0 ; i < this.numS ; i++ ) {
         this.splosions[i].draw();
       }
+      // draw the game over info
       noStroke();
       fill(255);
       textAlign( CENTER , CENTER );
+      textFont( font2 );
+      textStyle( NORMAL );
     	textSize( minRes*0.08 );
     	var scoreText = numberWithCommas( gameScore );
+    	var timeText = millisToTimeString( timeAtDeath );
     	var cv = (gameTime*0.05)%360;
-    	fill( hsvColor( cv , 0.5 , 1 , 196 ) );
-    	text( 'GAME OVER\nSCORE: ' + scoreText , xC , yRes*0.25 );
+    	fill( hsvColor( (cv+30)%360 , 0.5 , 1 , 196 ) );
+    	text( 'GAME OVER', xC , yC - 0.25*winExt );
+    	textFont( font1 );
     	textSize( minRes*0.05 );
-    	text( 'survived ' + round(timeAtDeath/10)/100 + ' seconds'  , xC , yRes*0.75 );
+    	text( 'score: ' + scoreText + '\ntime: ' + timeText  , xC , yC + 0.25*winExt );
     	// draw restart button
     	noStroke();
-      fill( pbColor );
+      fill( hsvColor( (cv)%360 , 0.5 , 0.5 , 196 ) );
       d = pmRadius * gf2winFactor * 2;
       ellipse( xC , yC , d , d );
       textAlign( CENTER , CENTER );
-      fill( lifeColor );
-      textSize( 0.4*gf2winFactor );
+      fill( hsvColor( (cv+30)%360 , 0.5 , 1 , 196 ) );
+      textFont( font1 );
+      textSize( 0.57*gf2winFactor );
+      textStyle( BOLD );
       text( 'RESTART' , xC , yC );
     }
     // DRAW: PRE /////////////////////////////////////////////////////////////////////////
@@ -1013,22 +1060,30 @@ var Game = function() {
       }
       noStroke();
       fill(255);
+      textFont( font2 );
       textAlign( CENTER , CENTER );
-    	textSize( minRes*0.08 );
+    	textSize( minRes*0.1 );
+    	textStyle( NORMAL );
     	//var scoreText = numberWithCommas( gameScore );
     	var cv = (gameTime*0.05)%360;
-    	fill( hsvColor( cv , 0.5 , 1 , 196 ) );
-    	text( 'PIP SPLODER\n-marthematicist-', xC , yRes*0.25 );
+    	fill( hsvColor( (cv+30)%360 , 0.5 , 1 , 128 ) );
+    	text( 'PIP SPLODER', xC , yC - 0.37*winExt );
     	textSize( minRes*0.05 );
-    	text( 'version ' + vers  , xC , yRes*0.75 );
+    	text( '- marthematicist -', xC , yC - 0.25*winExt );
+    	textFont( font1 );
+    	textSize( minRes*0.05 );
+    	text( 'version ' + vers  , xC , yC + 0.25*winExt );
     	// draw begin button
     	noStroke();
       fill( pbColor );
+      fill( hsvColor( (cv)%360 , 0.5 , 0.5 , 220 ) );
       d = pmRadius * gf2winFactor * 2;
       ellipse( xC , yC , d , d );
       textAlign( CENTER , CENTER );
-      fill( lifeColor );
-      textSize( 0.4*gf2winFactor );
+      fill( hsvColor( (cv+30)%360 , 0.5 , 1 , 255 ) );
+      textFont( font1 );
+      textSize( 0.7*gf2winFactor );
+      textStyle( BOLD );
       text( 'BEGIN' , xC , yC );
     }
   };
@@ -1080,6 +1135,13 @@ var Game = function() {
   }
 };
 
+// P5 PRELOAD FUNCTION ////////////////////////////////////////////////////////////
+function preload() {
+  font1 = loadFont('assets/DS-DIGI.TTF');
+  font2 = loadFont('assets/PLANK.TTF');
+}
+
+
 // P5 SETUP FUNCTION //////////////////////////////////////////////////////////////
 function setup() {
   setupGlobalVariables();
@@ -1091,16 +1153,16 @@ function setup() {
 }
 // P5 DRAW FUNCTION ////////////////////////////////////////////////////////////////
 function draw() {
+  
   // reset avgFrameTime
   var dt = millis()  - frameTime;
-  if( dt < avgFrameTime*2 ) {
-    avgFrameTime = 0.9*avgFrameTime + 0.1*(dt);
+  if( dt < avgFrameTime*10 ) {
+    avgFrameTime = 0.6*avgFrameTime + 0.4*(dt);
   }
   frameTime = millis();
   // roll forward gameTime
   gameTime += avgFrameTime;
- 
-    
+
   // evolve the game
   G.evolve( avgFrameTime );
   
@@ -1139,7 +1201,7 @@ function touchStarted() {
     // GAME MODE: POST
     // if reset button pushed, reset
     if( (G.mode === 'post') && (m.mag() <= pmRadius) ) {
-      background(0);
+      background(bgColor);
       setupGlobalVariables();
       // skip load screen
       G.triggerNextMode = true;
@@ -1147,7 +1209,7 @@ function touchStarted() {
     // GAME MODE: PRE
     // if begin button pushed, begin
     if( (G.mode === 'pre') && (m.mag() <= pmRadius) ) {
-      background(0);
+      background(bgColor);
       G.triggerNextMode = true;
     }
   }
