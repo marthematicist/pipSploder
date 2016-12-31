@@ -1,6 +1,6 @@
 // pipSploder
 // marthematicist - 2016
-var vers = '1.04';
+var vers = '1.05';
 console.log( 'pipSploder - version ' + vers );
 
 
