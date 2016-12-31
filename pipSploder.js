@@ -1,6 +1,6 @@
 // pipSploder
 // marthematicist - 2016
-var vers = '0.40';
+var vers = '0.42';
 console.log( 'pipSploder - version ' + vers );
 
 // GLOBAL VARIABLES /////////////////////////////////////////
@@ -755,10 +755,10 @@ var Game = function() {
       transTime *= transTimeFactor
       minDPA *= pipSpeedChangeFactor;
       maxDPA *= pipSpeedChangeFactor;
-      console.log( '\ngameTime: ' + gameTime);
-      console.log( 'timeBetweenNewPips=' + timeBetweenNewPips );
-      console.log( 'time at level: ' + typMin + ' - ' + typMax );
-      console.log( 'transTime: ' + transTime );
+      //console.log( '\ngameTime: ' + gameTime);
+      //console.log( 'timeBetweenNewPips=' + timeBetweenNewPips );
+      //console.log( 'time at level: ' + typMin + ' - ' + typMax );
+      //console.log( 'transTime: ' + transTime );
       
     }
     // check if it's time to turn off pow
