@@ -1,6 +1,6 @@
 // pipSploder
 // marthematicist - 2016
-var vers = '0.43';
+var vers = '0.45';
 console.log( 'pipSploder - version ' + vers );
 
 // GLOBAL VARIABLES /////////////////////////////////////////
@@ -71,6 +71,7 @@ function setupGlobalVariables() {
     // speed values
     minDPA = 0.0003;
     maxDPA = 0.0003;
+    typDPA = 0.0003;
     // wiggle values
     minWR = 0.03;
     maxWR = 0.03;
@@ -343,7 +344,7 @@ var Pip = function( ) {
   // path angle
   this.pa = random( 0 , TWO_PI );
   // path angle speed
-  this.dpa = random( minDPA , maxDPA );
+  this.dpa = typDPA;
   // wiggle radius
   this.wr = random( minWR , maxWR );
   // wiggle angle
@@ -400,7 +401,6 @@ var Pip = function( ) {
       this.x = createVector( r*cos( this.pa ) , r*sin( this.pa ) );
       // check if done transitioning. If so, start on next level
       if( ( gameTime-this.transStart) > transTime ) {
-        var s = this.dpa * radLevel[this.level] / radLevel[0];
         this.level++;
         if( this.level > numLevels-1 ) {
           this.alive = false;
@@ -408,7 +408,7 @@ var Pip = function( ) {
         } else {
           this.transitioning = false;
           this.levelStart = gameTime;
-         this.dpa = s / ( radLevel[this.level] / radLevel[0]);
+          this.dpa = typDPA * radLevel[0] / radLevel[this.level];
         }
       }
     } else {
@@ -753,8 +753,7 @@ var Game = function() {
         maxTimeAtLevel[i] = typMax;
       }
       transTime *= transTimeFactor
-      minDPA *= pipSpeedChangeFactor;
-      maxDPA *= pipSpeedChangeFactor;
+      typDPA *= pipSpeedChangeFactor;
       //console.log( '\ngameTime: ' + gameTime);
       //console.log( 'timeBetweenNewPips=' + timeBetweenNewPips );
       //console.log( 'time at level: ' + typMin + ' - ' + typMax );
@@ -857,7 +856,7 @@ function setup() {
 function draw() {
   // reset avgFrameTime
   var dt = millis()  - frameTime;
-  if( dt < avgFrameTime*3 ) {
+  if( dt < avgFrameTime*2 ) {
     avgFrameTime = 0.9*avgFrameTime + 0.1*(dt);
   }
   frameTime = millis();
