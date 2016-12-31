@@ -1,6 +1,6 @@
 // pipSploder
 // marthematicist - 2016
-var vers = '1.05';
+var vers = '1.06';
 console.log( 'pipSploder - version ' + vers );
 
 
@@ -770,6 +770,7 @@ var Game = function() {
       if( this.triggerNextMode ) {
         // reset gameTime
         gameTime = 0;
+        clickTime = gameTime;
         // set up for 'gameOn'
         this.mode = 'gameOn';
         this.modeTime = gameTime;
