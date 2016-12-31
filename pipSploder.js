@@ -1,6 +1,6 @@
 // pipSploder
 // marthematicist - 2016
-var vers = '0.46';
+var vers = '0.48';
 console.log( 'pipSploder - version ' + vers );
 
 // GLOBAL VARIABLES /////////////////////////////////////////
@@ -68,26 +68,14 @@ function setupGlobalVariables() {
     innerPipColor = color( 0 , 0 , 0 , innerPipAlpha );
     // pip outline thickness
     pipLineWeight = 0.02;
-    // speed values
-    minDPA = 0.0003;
-    maxDPA = 0.0003;
-    typDPA = 0.0003;
+    
     // wiggle values
     minWR = 0.03;
     maxWR = 0.03;
     minDWA = 0.017;
     maxDWA = 0.020;
-    // transition time (ms)
-    transTime = 1200;
-    // min/max time per level (ms)
-    typMin = 4000;
-    typMax = 8000;
-    minTimeAtLevel = [ 0 ];
-    maxTimeAtLevel = [ 0 ];
-    for( var i = 1 ; i < numLevels ; i++ ) {
-      minTimeAtLevel[i] = typMin;
-      maxTimeAtLevel[i] = typMax;
-    }
+    
+    
   }
   
   
@@ -117,12 +105,36 @@ function setupGlobalVariables() {
   
   // TIME VARIABLES
   {
+    // speed values
+    typDPA = 0.0003;
+    typDPASet = 0.0003;
+    // min/max time per level (ms)
+    typMin = 4000;
+    typMax = 8000;
+    typMinSet = 4000;
+    typMaxSet = 8000;
+    minTimeAtLevel = [ 0 ];
+    maxTimeAtLevel = [ 0 ];
+    minTimeAtLevelSet = [ 0 ];
+    maxTimeAtLevelSet = [ 0 ];
+    for( var i = 1 ; i < numLevels ; i++ ) {
+      minTimeAtLevel[i] = typMin;
+      maxTimeAtLevel[i] = typMax;
+      minTimeAtLevelSet[i] = typMin;
+      maxTimeAtLevelSet[i] = typMax;
+    }
+    // transition time (ms)
+    transTime = 1200;
+    transTimeSet = 1200;
+    // time between adding new pips
+    timeBetweenNewPips = 600;
+    timeBetweenNewPipsSet = 600;
+    
     // simte since game was initialized
     gameTime = 0;
     // time of last pip added
     newPipTime = 0;
-    // time between adding new pips
-    timeBetweenNewPips = 600;
+    
     // min time between clicks
     minTimeBetweenClicks = 200;
     // time of last click
@@ -698,6 +710,16 @@ var Game = function() {
   // Game method: evolve
   // evolves all Pips, Splosions
   this.evolve = function( dt ) {
+    // reset all time variables
+    var e = floor( gameTime / speedUpInterval );
+    timeBetweenNewPips = timeBetweenNewPipsSet*pow(timeBetweenNewPipsFactor,e);
+    for( var i = 0 ; i < numLevels ; i++ ) {
+      minTimeAtLevel[i] = minTimeAtLevelSet[i]*pow(timeAtLevelFactor,e);
+      maxTimeAtLevel[i] = maxTimeAtLevelSet[i]*pow(timeAtLevelFactor,e);;
+    }
+    transTime = transTimeSet*pow(transTimeFactor,e);
+    typDPA = typDPASet*pow(pipSpeedChangeFactor,e);
+      
     // start pow if it has been triggered
     if( powTriggered ) {
       G.pow();
@@ -743,8 +765,11 @@ var Game = function() {
       background(0);
     }
     // check if it's time to speed up
-    if( gameTime - speedUpTime > speedUpInterval ) {
+    if( false ) {
+    //if( gameTime - speedUpTime > speedUpInterval ) {
       speedUpTime = gameTime;
+      
+      
       timeBetweenNewPips *= timeBetweenNewPipsFactor;
       for( var i = 0 ; i < numLevels ; i++ ) {
         minTimeAtLevel[i] *= timeAtLevelFactor;
@@ -752,9 +777,9 @@ var Game = function() {
       }
       transTime *= transTimeFactor
       typDPA *= pipSpeedChangeFactor;
-      //console.log( '\ngameTime: ' + gameTime);
+      console.log( '\ngameTime: ' + gameTime);
       //console.log( 'timeBetweenNewPips=' + timeBetweenNewPips );
-      //console.log( 'time at level: ' + typMin + ' - ' + typMax );
+      console.log( 'time at level: ' + minTimeAtLevel[1] + ' - ' + maxTimeAtLevel[1] );
       //console.log( 'transTime: ' + transTime );
       
     }
