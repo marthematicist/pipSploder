@@ -1,6 +1,6 @@
 // pipSploder
 // marthematicist - 2016
-var vers = '0.42';
+var vers = '0.43';
 console.log( 'pipSploder - version ' + vers );
 
 // GLOBAL VARIABLES /////////////////////////////////////////
@@ -264,9 +264,9 @@ function setupGlobalVariables() {
     // game score:
     gameScore = 0;
     // points per Pip
-    pointsPerPip = 100;
+    pointsPerPip = 1000;
     // bonus multiplier for multi-kill bombs
-    bonusMultPerPip = 0.25;
+    bonusMultPerPip = 0.5;
     // score text size
     scoreTextSize = 0.60;
     // score transparency
