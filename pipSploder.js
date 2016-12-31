@@ -1020,7 +1020,7 @@ var Game = function() {
     	fill( hsvColor( cv , 0.5 , 1 , 196 ) );
     	text( 'PIP SPLODER\n-marthematicist-', xC , yRes*0.25 );
     	textSize( minRes*0.05 );
-    	// text( 'you survived ' + round(timeAtDeath/10)/100 + ' seconds'  , xC , yRes*0.75 );
+    	text( 'version ' + vers  , xC , yRes*0.75 );
     	// draw begin button
     	noStroke();
       fill( pbColor );
