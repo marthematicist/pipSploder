@@ -1,6 +1,6 @@
 // pipSploder
 // marthematicist - 2016
-var vers = '0.48';
+var vers = '0.49';
 console.log( 'pipSploder - version ' + vers );
 
 // GLOBAL VARIABLES /////////////////////////////////////////
@@ -711,7 +711,7 @@ var Game = function() {
   // evolves all Pips, Splosions
   this.evolve = function( dt ) {
     // reset all time variables
-    var e = floor( gameTime / speedUpInterval );
+    var e = ( gameTime / speedUpInterval );
     timeBetweenNewPips = timeBetweenNewPipsSet*pow(timeBetweenNewPipsFactor,e);
     for( var i = 0 ; i < numLevels ; i++ ) {
       minTimeAtLevel[i] = minTimeAtLevelSet[i]*pow(timeAtLevelFactor,e);
