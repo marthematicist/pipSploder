@@ -77,7 +77,7 @@ function setupGlobalVariables() {
     minDWA = 0.017;
     maxDWA = 0.020;
     // transition time (ms)
-    transTime = 1500;
+    transTime = 1200;
     // min/max time per level (ms)
     typMin = 4000;
     typMax = 8000;
@@ -121,7 +121,7 @@ function setupGlobalVariables() {
     // time of last pip added
     newPipTime = 0;
     // time between adding new pips
-    timeBetweenNewPips = 800;
+    timeBetweenNewPips = 600;
     // min time between clicks
     minTimeBetweenClicks = 200;
     // time of last click
@@ -131,13 +131,14 @@ function setupGlobalVariables() {
     // last time sped up
     speedUpTime = 0;
     // change in time between adding new pips
-    timeBetweenNewPipsFactor = 0.9;
+    timeBetweenNewPipsFactor = 0.92;
     // change in time at level factor
-    timeAtLevelFactor = 0.8;
+    timeAtLevelFactor = 0.82;
     // change in pip speed factor
-    pipSpeedChangeFactor = 1.1;
+    pipSpeedChangeFactor = 1.05;
     // time at death
     timeAtDeath = 0;
+    transTimeFactor = 0.92;
     
   }
   
@@ -255,6 +256,8 @@ function setupGlobalVariables() {
     paTime = 0;
     // pow animation weight
     paWeight = 0.05;
+    // pow triggered
+    powTriggered = false;
   }
   // SCORING VARIABLES:
   {
@@ -390,10 +393,11 @@ var Pip = function( ) {
       // if Pip is transitioning, move toward next level
       var a = ( gameTime-this.transStart) / transTime ;
       var r = (1-a)*radLevel[this.level] + a*radLevel[this.level+1];
-      this.wa += this.dwa*dt;
-      this.wa %= TWO_PI;
-      this.moveTo( r*cos( this.pa + 0.9*this.wr*cos(this.wa) ) ,
-                   r*sin( this.pa + 0.9*this.wr*cos(this.wa) ) );
+      //this.wa += this.dwa*dt;
+      //this.wa %= TWO_PI;
+      //this.moveTo( r*cos( this.pa + 0.9*this.wr*cos(this.wa) ) ,
+      //             r*sin( this.pa + 0.9*this.wr*cos(this.wa) ) );
+      this.x = createVector( r*cos( this.pa ) , r*sin( this.pa ) );
       // check if done transitioning. If so, start on next level
       if( ( gameTime-this.transStart) > transTime ) {
         var s = this.dpa * radLevel[this.level] / radLevel[0];
@@ -416,10 +420,11 @@ var Pip = function( ) {
       }
       this.pa %= TWO_PI;
       if( this.pa < 0 ) { this.pa += TWO_PI; }
-      this.wa += this.dwa*dt;
-      this.wa %= TWO_PI;
-      this.moveTo( (radLevel[this.level] + this.wr*(0.5+0.5*cos( this.wa ) ) )*cos( this.pa ) ,
-                 (radLevel[this.level]  + this.wr*(0.5+0.5*cos( this.wa ) ) )*sin( this.pa ) );
+      //this.wa += this.dwa*dt;
+      //this.wa %= TWO_PI;
+      //this.moveTo( (radLevel[this.level] + this.wr*(0.5+0.5*cos( this.wa ) ) )*cos( this.pa ) ,
+      //           (radLevel[this.level]  + this.wr*(0.5+0.5*cos( this.wa ) ) )*sin( this.pa ) );
+      this.x = createVector( radLevel[this.level]*cos( this.pa ) , radLevel[this.level]*sin( this.pa ) );
       // check if time is up on this level, and if so start transitioning
       if( gameTime - this.levelStart > this.timeAtLevel[ this.level ] ) {
         this.transitioning = true;
@@ -693,6 +698,11 @@ var Game = function() {
   // Game method: evolve
   // evolves all Pips, Splosions
   this.evolve = function( dt ) {
+    // start pow if it has been triggered
+    if( powTriggered ) {
+      G.pow();
+      powTriggered = false;
+    }
     // check if blast killed any pips
     this.checkBlasts();
     // check if it's time for a new pip
@@ -742,10 +752,13 @@ var Game = function() {
         minTimeAtLevel[i] = typMin;
         maxTimeAtLevel[i] = typMax;
       }
+      transTime *= transTimeFactor
       minDPA *= pipSpeedChangeFactor;
       maxDPA *= pipSpeedChangeFactor;
-      //console.log( 'timeBetweenNewPips=' + timeBetweenNewPips );
-      //console.log( 'time at level: ' + typMin + ' - ' + typMax );
+      console.log( '\ngameTime: ' + gameTime);
+      console.log( 'timeBetweenNewPips=' + timeBetweenNewPips );
+      console.log( 'time at level: ' + typMin + ' - ' + typMax );
+      console.log( 'transTime: ' + transTime );
       
     }
     // check if it's time to turn off pow
@@ -939,39 +952,8 @@ function draw() {
     text( scoreText , 0 , 0 );
     
   } else {
+    // game over screen
     background( 0 , 0 , 0 , 64 );
-	  
-	  /*
-   
-	  // evolve all Splosions
-    for( var i = 0 ; i < G.numS ; i++ ) {
-      G.splosions[i].evolve( dt );
-    }
-    // remove dead Splosions
-    ind = [];
-    for( var i = 0 ; i < G.numS ; i++ ) {
-      if( !G.splosions[i].alive ) {
-        append( ind , i );
-      }
-    }
-    reverse( ind );
-    for( var i = 0 ; i < ind.length ; i++ ) {
-      G.splosions.splice( ind[i] , 1 );
-    }
-    G.numS -= ind.length;
-    // draw all Splosions
-    for( var i = 0 ; i < G.numS ; i++ ) {
-      G.splosions[i].draw();
-    }
-    // add new Splosions
-    for( var i = 0 ; i < 10 - G.numS ; i++ ) {
-      var c = hsvColor( random(0,360) , 0.5 , 1 , pipAlpha );
-      var x = createVector( 0 , 0 );
-      G.splosions[i] = new Splosion( x , c );
-    }
-    G.numS = G.splosions.length;
-    
-    */
     noStroke();
     fill(255);
     textAlign( CENTER , CENTER );
@@ -1006,7 +988,7 @@ function touchStarted() {
     var m = win2gfVect( createVector( mouseX , mouseY ) );
     if( gameOn ) {
       if( (pmValue >= pmMax) && ( m.mag() <= pmRadius ) ) {
-        G.pow();
+        powTriggered = true;
         pmValue = 0;
       } else {
         if( playerBombs >= 1 ) {
