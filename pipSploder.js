@@ -1,6 +1,6 @@
 // pipSploder
 // marthematicist - 2016
-var vers = '1.07';
+var vers = '1.08';
 console.log( 'pipSploder - version ' + vers );
 
 
@@ -296,7 +296,7 @@ function setupGlobalVariables() {
     // score color
     scoreColor = color( 255 , 255 , 255 , scoreAlpha );
     scorebgAlpha = 128;
-    scorebgColor = color( 30 , 30 , 30 , scorebgAlpha);
+    scorebgColor = color( 20 , 20 , 20 , scorebgAlpha);
     // height of score display
     textAlign( LEFT , TOP );
     scoreHeight = font1.textBounds( '120:0,08' , 0 , 0 , scoreTextSize*gf2winFactor ).h*1.3 ;
