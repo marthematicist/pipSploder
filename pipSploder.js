@@ -1,6 +1,6 @@
 // pipSploder
 // marthematicist - 2016
-var vers = '1.09';
+var vers = '1.08';
 console.log( 'pipSploder - version ' + vers );
 
 
@@ -367,7 +367,7 @@ function millisToTimeString(x) {
   var m = ( ( x - (x%60000)) / 60000 ).toString();
   var d = ( round( x % 1000 / 10 ) ).toString();
   if( d.length < 2 ) { d = '0' + d; }
-  return ( '' + m + ':' + s + ':' + d );
+  return ( '' + m + ':' + s + '.' + d );
 }
 
 // CLASS: Pip /////////////////////////////////////////////////////////////
