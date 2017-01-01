@@ -1,6 +1,6 @@
 // pipSploder
 // marthematicist - 2016
-var vers = '1.06';
+var vers = '1.07';
 console.log( 'pipSploder - version ' + vers );
 
 
@@ -752,6 +752,7 @@ var Game = function() {
       // check if it's time to turn off pow
       if( paOn && (gameTime - paTime > paDuration ) ) {
         paOn = false;
+        powTriggered = true;
       }
       // evolve all Splosions
       for( var i = 0 ; i < this.numS ; i++ ) {
@@ -803,6 +804,7 @@ var Game = function() {
       if( powTriggered ) {
         G.pow();
         powTriggered = false;
+        playerBombs = maxBombs;
       }
       // check if it's time to turn off pow
       if( paOn && (gameTime - paTime > paDuration ) ) {
@@ -862,6 +864,7 @@ var Game = function() {
       // check if it's time to turn off pow
       if( paOn && (gameTime - paTime > paDuration ) ) {
         paOn = false;
+        powTriggered = true;
       }
       // evolve all Splosions
       for( var i = 0 ; i < this.numS ; i++ ) {
@@ -998,14 +1001,14 @@ var Game = function() {
       background( 0 , 0 , 0 , 64 );
       // draw the pow animation
       if( paOn ) {
-        var a = (gameTime - paTime)/paDuration;
+         var a = (gameTime - paTime)/paDuration;
         var d1 = 2*gf2winFactor*( pmRadius + (2*pmRadius - pmRadius)*(0.5+0.5*cos(TWO_PI*a) ) );
         var d2 = 2*gf2winFactor*( pmRadius + (2*pmRadius - pmRadius)*(0.5-0.5*cos(TWO_PI*a) ) );
         noFill();
         strokeWeight( paWeight*gf2winFactor );
-        stroke( hsvColor( 360*a , 1 , 1 , paAlpha*(1-a) ) );
+        stroke( hsvColor( 360*a , 1 , 1 , paAlpha*(1) ) );
         ellipse( xC , yC , d1 , d1 );
-        stroke( hsvColor( 360*(1-a) , 1 , 1 , paAlpha*(1-a) ) );
+        stroke( hsvColor( 360*(a) , 1 , 1 , paAlpha*(1) ) );
         ellipse( xC , yC , d2 , d2 );
       }
       // draw all Splosions
@@ -1050,9 +1053,9 @@ var Game = function() {
         var d2 = 2*gf2winFactor*( pmRadius + (2*pmRadius - pmRadius)*(0.5-0.5*cos(TWO_PI*a) ) );
         noFill();
         strokeWeight( paWeight*gf2winFactor );
-        stroke( hsvColor( 360*a , 1 , 1 , paAlpha*(1-a) ) );
+        stroke( hsvColor( 360*a , 1 , 1 , paAlpha*(1) ) );
         ellipse( xC , yC , d1 , d1 );
-        stroke( hsvColor( 360*(1-a) , 1 , 1 , paAlpha*(1-a) ) );
+        stroke( hsvColor( 360*(a) , 1 , 1 , paAlpha*(1) ) );
         ellipse( xC , yC , d2 , d2 );
       }
       // draw all Splosions
