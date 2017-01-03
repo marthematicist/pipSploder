@@ -1,4 +1,4 @@
-// pipSploder (renamed Polar Sploder)
+// pipSploder (renamed Polar Attack)
 // marthematicist - 2016
 var vers = '1.13';
 console.log( 'ploarAttack - version ' + vers );
