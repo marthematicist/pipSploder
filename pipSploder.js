@@ -1,6 +1,6 @@
 // pipSploder (renamed Polar Sploder)
 // marthematicist - 2016
-var vers = '1.10';
+var vers = '1.13';
 console.log( 'ploarSploder - version ' + vers );
 
 
@@ -184,8 +184,8 @@ function setupGlobalVariables() {
   
   // SPLOSION VARIABLES
   {
-    splosionLife = 3000;
-    splosionParticles = 20;
+    splosionLife = 2000;
+    splosionParticles = 30;
     splosionDiam = 0.05;
   }
   
@@ -482,7 +482,7 @@ var Splosion = function( x , c ) {
   // diameter of particles
   this.pd = splosionDiam;
   // min/max particle velocities
-  this.pvMin = 0.001;
+  this.pvMin = 0.0001;
   this.pvMax = 0.002;
   // array of particle positions and velocities
   this.px = [];
