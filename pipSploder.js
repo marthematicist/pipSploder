@@ -1,7 +1,7 @@
-// pipSploder
+// pipSploder (renamed Polar Sploder)
 // marthematicist - 2016
-var vers = '1.08';
-console.log( 'pipSploder - version ' + vers );
+var vers = '1.10';
+console.log( 'ploarSploder - version ' + vers );
 
 
 // GLOBAL VARIABLES /////////////////////////////////////////
@@ -945,7 +945,7 @@ var Game = function() {
         fill( lifeColor );
         textFont( font1 );
         textSize( 0.5*gf2winFactor );
-        text( 'BOMBE' , xC , yC );
+        text( 'BOMB!' , xC , yC );
       }
       // draw life meter
       d = lifeRadius * gf2winFactor * 2;
@@ -1071,7 +1071,7 @@ var Game = function() {
     	//var scoreText = numberWithCommas( gameScore );
     	var cv = (gameTime*0.05)%360;
     	fill( hsvColor( (cv+30)%360 , 0.5 , 1 , 128 ) );
-    	text( 'PIP SPLODER', xC , yC - 0.37*winExt );
+    	text( 'POLAR SPLODER', xC , yC - 0.37*winExt );
     	textSize( minRes*0.05 );
     	text( '- marthematicist -', xC , yC - 0.25*winExt );
     	textFont( font1 );
