@@ -1,6 +1,6 @@
 // pipSploder (renamed Polar Attack)
 // marthematicist - 2016
-var vers = '1.13';
+var vers = '1.14';
 console.log( 'ploarAttack - version ' + vers );
 
 
@@ -521,6 +521,17 @@ var Splosion = function( x , c ) {
       }
     }
   }
+  // Splosion method: regen
+  // regenerates the Splosion particles
+  this.regen = function() {
+    this.px = [];
+    this.pv = [];
+    for( var i = 0 ; i < this.np ; i++ ) {
+      this.px[i] = createVector( x.x , x.y );
+      this.pv[i] = p5.Vector.random2D();
+      this.pv[i].mult( random( this.pvMin , this.pvMax ) );
+    }
+  }
 };
 
 // CLASS: Bomb ////////////////////////////////////////////////////////
@@ -763,7 +774,13 @@ var Game = function() {
       // randomly add splosions
       if( gameTime - randomSplosionTime > randomSplosionFrequency) {
           var c = hsvColor( random(0,360) , 0.5 , 1 , 255 );
-          append( this.splosions , new Splosion( createVector(0,0) , c ) );
+          var E = new Splosion( createVector(0,0) , c );
+          E.pvMin = 0.0001;
+          E.pvMax = 0.002;
+          E.life = 4000;
+          E.np = 20;
+          E.regen();
+          append( this.splosions , E );
           this.numS++;
           randomSplosionTime = gameTime;
       }
@@ -875,7 +892,13 @@ var Game = function() {
       // randomly add splosions
       if( gameTime - randomSplosionTime > randomSplosionFrequency) {
           var c = hsvColor( random(0,360) , 0.5 , 1 , 255 );
-          append( this.splosions , new Splosion( createVector(0,0) , c ) );
+          var E = new Splosion( createVector(0,0) , c );
+          E.pvMin = 0.0001;
+          E.pvMax = 0.002;
+          E.life = 4000;
+          E.np = 20;
+          E.regen();
+          append( this.splosions , E );
           this.numS++;
           randomSplosionTime = gameTime;
       }
