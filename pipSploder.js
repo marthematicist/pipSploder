@@ -1,7 +1,7 @@
 // pipSploder (renamed Polar Command)
 // marthematicist - 2016
 var vers = '1.14';
-console.log( 'ploarAttack - version ' + vers );
+console.log( 'ploarCommand - version ' + vers );
 
 
 // GLOBAL VARIABLES /////////////////////////////////////////
