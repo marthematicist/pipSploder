@@ -1089,7 +1089,7 @@ var Game = function() {
       fill(255);
       textFont( font2 );
       textAlign( CENTER , CENTER );
-    	textSize( minRes*0.1 );
+    	textSize( minRes*0.075 );
     	textStyle( NORMAL );
     	//var scoreText = numberWithCommas( gameScore );
     	var cv = (gameTime*0.05)%360;
