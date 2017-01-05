@@ -1,4 +1,4 @@
-// pipSploder (renamed Polar Attack)
+// pipSploder (renamed Polar Command)
 // marthematicist - 2016
 var vers = '1.14';
 console.log( 'ploarAttack - version ' + vers );
@@ -1094,7 +1094,7 @@ var Game = function() {
     	//var scoreText = numberWithCommas( gameScore );
     	var cv = (gameTime*0.05)%360;
     	fill( hsvColor( (cv+30)%360 , 0.5 , 1 , 128 ) );
-    	text( 'POLAR ATTACK', xC , yC - 0.37*winExt );
+    	text( 'POLAR COMMAND', xC , yC - 0.37*winExt );
     	textSize( minRes*0.05 );
     	text( '- marthematicist -', xC , yC - 0.25*winExt );
     	textFont( font1 );
