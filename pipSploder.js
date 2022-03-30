@@ -263,7 +263,7 @@ function setupGlobalVariables() {
     // pow meter weight
     pmWeight = 0.1;
     // levels Pips are powed per pow
-    levelsPerPow = 5;
+    levelsPerPow = numLevels;
     // pow animation transparency
     paAlpha = 128;
     // min/max radius of pow animation
